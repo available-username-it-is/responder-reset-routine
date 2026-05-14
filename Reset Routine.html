@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Responder Reset Routine Prototype</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --panel: #111827;
+      --panel-2: #1f2937;
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --border: #374151;
+      --accent: #60a5fa;
+      --good: #34d399;
+      --warn: #fbbf24;
+      --bad: #f87171;
+      --button: #2563eb;
+      --button-hover: #1d4ed8;
+      --stop: #dc2626;
+      --stop-hover: #b91c1c;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: radial-gradient(circle at top, #172554 0%, var(--bg) 42%);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 28px;
+    }
+
+    .app {
+      max-width: 1120px;
+      margin: 0 auto;
+    }
+
+    header {
+      margin-bottom: 24px;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: clamp(2rem, 4vw, 3.4rem);
+      letter-spacing: -0.04em;
+    }
+
+    .subtitle {
+      margin: 0;
+      color: var(--muted);
+      max-width: 760px;
+      line-height: 1.55;
+      font-size: 1rem;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1.05fr 0.95fr;
+      gap: 18px;
+    }
+
+    @media (max-width: 860px) {
+      body { padding: 18px; }
+      .grid { grid-template-columns: 1fr; }
+    }
+
+    .card {
+      background: rgba(17, 24, 39, 0.9);
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      border-radius: 22px;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.22);
+      padding: 20px;
+    }
+
+    .card h2 {
+      margin: 0 0 14px;
+      font-size: 1.2rem;
+    }
+
+    .controls {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 16px;
+    }
+
+    button {
+      border: none;
+      border-radius: 14px;
+      padding: 12px 16px;
+      color: white;
+      background: var(--button);
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.12s ease, background 0.12s ease, opacity 0.12s ease;
+    }
+
+    button:hover:not(:disabled) {
+      background: var(--button-hover);
+      transform: translateY(-1px);
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.45;
+    }
+
+    .stop-btn {
+      background: var(--stop);
+    }
+
+    .stop-btn:hover:not(:disabled) {
+      background: var(--stop-hover);
+    }
+
+    .secondary-btn {
+      background: #374151;
+    }
+
+    .secondary-btn:hover:not(:disabled) {
+      background: #4b5563;
+    }
+
+    .routine-status {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px;
+      border: 1px solid var(--border);
+      background: rgba(31, 41, 55, 0.7);
+      border-radius: 18px;
+      margin-bottom: 16px;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: #334155;
+      color: var(--text);
+      font-size: 0.9rem;
+      font-weight: 700;
+    }
+
+    .dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 999px;
+      background: var(--muted);
+    }
+
+    .dot.active {
+      background: var(--good);
+      box-shadow: 0 0 0 6px rgba(52, 211, 153, 0.12);
+    }
+
+    .timer {
+      color: var(--muted);
+      font-variant-numeric: tabular-nums;
+      font-weight: 700;
+    }
+
+    .bio-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .bio-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      align-items: center;
+      padding: 14px;
+      border-radius: 18px;
+      border: 1px solid var(--border);
+      background: rgba(31, 41, 55, 0.72);
+    }
+
+    .metric-title {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+
+    .metric-title strong {
+      font-size: 0.98rem;
+    }
+
+    .metric-title span {
+      color: var(--muted);
+      font-size: 0.92rem;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .bar {
+      height: 10px;
+      border-radius: 999px;
+      background: #0b1220;
+      overflow: hidden;
+      border: 1px solid rgba(148, 163, 184, 0.16);
+    }
+
+    .bar-fill {
+      height: 100%;
+      width: 50%;
+      border-radius: 999px;
+      background: var(--accent);
+      transition: width 0.25s ease, background 0.25s ease;
+    }
+
+    .mini-controls {
+      display: flex;
+      gap: 6px;
+    }
+
+    .mini-controls button {
+      width: 38px;
+      height: 38px;
+      padding: 0;
+      border-radius: 12px;
+      background: #475569;
+      font-size: 1.1rem;
+    }
+
+    .advice-box {
+      min-height: 228px;
+      border-radius: 20px;
+      border: 1px solid rgba(96, 165, 250, 0.3);
+      background: linear-gradient(180deg, rgba(30, 64, 175, 0.24), rgba(31, 41, 55, 0.65));
+      padding: 18px;
+      line-height: 1.55;
+    }
+
+    .advice-box h3 {
+      margin: 0 0 10px;
+      font-size: 1.05rem;
+    }
+
+    .advice-box p {
+      margin: 8px 0;
+      color: #dbeafe;
+    }
+
+    .advice-level {
+      display: inline-block;
+      margin-bottom: 10px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-weight: 800;
+      font-size: 0.82rem;
+      letter-spacing: 0.02em;
+    }
+
+    .level-good { background: rgba(52, 211, 153, 0.16); color: var(--good); }
+    .level-watch { background: rgba(251, 191, 36, 0.16); color: var(--warn); }
+    .level-high { background: rgba(248, 113, 113, 0.16); color: var(--bad); }
+
+    .exercise-card {
+      margin-top: 16px;
+      padding: 16px;
+      border-radius: 18px;
+      background: rgba(15, 23, 42, 0.72);
+      border: 1px solid var(--border);
+    }
+
+    .breath-circle-wrap {
+      display: flex;
+      justify-content: center;
+      margin: 16px 0;
+    }
+
+    .breath-circle {
+      width: 132px;
+      height: 132px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: rgba(96, 165, 250, 0.18);
+      border: 2px solid rgba(96, 165, 250, 0.45);
+      color: #bfdbfe;
+      font-weight: 900;
+      letter-spacing: 0.03em;
+      transform: scale(0.86);
+      transition: transform 4s ease-in-out;
+      text-align: center;
+      padding: 12px;
+    }
+
+    .breath-circle.expand {
+      transform: scale(1.08);
+    }
+
+    .feedback {
+      margin-top: 16px;
+      padding: 16px;
+      border-radius: 18px;
+      border: 1px solid var(--border);
+      background: rgba(31, 41, 55, 0.72);
+    }
+
+    .feedback h3 {
+      margin: 0 0 10px;
+    }
+
+    .feedback ul {
+      margin: 10px 0 0;
+      padding-left: 20px;
+      color: var(--text);
+      line-height: 1.55;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .note {
+      margin-top: 14px;
+      color: var(--muted);
+      font-size: 0.88rem;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header>
+      <h1>Responder Reset Routine</h1>
+      <p class="subtitle">
+        Browser-only prototype using dummy biometric data. Start a reset routine, adjust values manually, and receive simple adaptive guidance based on the current readings.
+      </p>
+    </header>
+
+    <section class="grid">
+      <div class="card">
+        <div class="routine-status">
+          <div class="status-pill"><span id="statusDot" class="dot"></span><span id="statusText">Routine idle</span></div>
+          <div id="timer" class="timer">00:00</div>
+        </div>
+
+        <h2>Bio data</h2>
+        <div id="bioList" class="bio-list"></div>
+
+        <div class="controls">
+          <button id="startBtn">Start reset routine</button>
+          <button id="stopBtn" class="stop-btn" disabled>Stop routine</button>
+          <button id="randomizeBtn" class="secondary-btn">Randomize bio data</button>
+        </div>
+
+        <p class="note">
+          Prototype note: values are simulated and advice is rule-based. This is not a medical tool, diagnostic tool, or fitness-for-duty system.
+        </p>
+      </div>
+
+      <div class="card">
+        <h2>Live guidance</h2>
+        <div id="adviceBox" class="advice-box">
+          <span class="advice-level level-watch">READY</span>
+          <h3>Press “Start reset routine” to begin.</h3>
+          <p>The app will generate dummy data and suggest a recovery exercise based on the current readings.</p>
+        </div>
+
+        <div class="exercise-card">
+          <h2>Exercise cue</h2>
+          <div class="breath-circle-wrap">
+            <div id="breathCircle" class="breath-circle">Ready</div>
+          </div>
+          <p id="exerciseText" class="subtitle">
+            When the routine starts, follow the breathing or grounding guidance. The advice will adapt as the dummy values change.
+          </p>
+        </div>
+
+        <div id="feedbackBox" class="feedback hidden"></div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const metrics = {
+      heartRate: {
+        label: "Heart rate",
+        unit: "bpm",
+        min: 45,
+        max: 150,
+        step: 3,
+        value: 78,
+        lowerBetter: true
+      },
+      hrv: {
+        label: "HRV",
+        unit: "ms",
+        min: 10,
+        max: 120,
+        step: 5,
+        value: 48,
+        lowerBetter: false
+      },
+      respiration: {
+        label: "Respiration",
+        unit: "breaths/min",
+        min: 6,
+        max: 32,
+        step: 1,
+        value: 16,
+        lowerBetter: true
+      },
+      stress: {
+        label: "Stress load",
+        unit: "/100",
+        min: 0,
+        max: 100,
+        step: 5,
+        value: 42,
+        lowerBetter: true
+      }
+    };
+
+    let isRunning = false;
+    let seconds = 0;
+    let timerInterval = null;
+    let driftInterval = null;
+    let breathInterval = null;
+    let startedAtValues = null;
+
+    const bioList = document.getElementById("bioList");
+    const startBtn = document.getElementById("startBtn");
+    const stopBtn = document.getElementById("stopBtn");
+    const randomizeBtn = document.getElementById("randomizeBtn");
+    const statusDot = document.getElementById("statusDot");
+    const statusText = document.getElementById("statusText");
+    const timer = document.getElementById("timer");
+    const adviceBox = document.getElementById("adviceBox");
+    const feedbackBox = document.getElementById("feedbackBox");
+    const breathCircle = document.getElementById("breathCircle");
+    const exerciseText = document.getElementById("exerciseText");
+
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(max, value));
+    }
+
+    function randomInt(min, max) {
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    function randomizeData() {
+      metrics.heartRate.value = randomInt(62, 128);
+      metrics.hrv.value = randomInt(18, 90);
+      metrics.respiration.value = randomInt(9, 28);
+      metrics.stress.value = randomInt(15, 95);
+      renderBioData();
+      updateAdvice();
+    }
+
+    function metricStatus(key, value) {
+      if (key === "heartRate") {
+        if (value >= 105) return "bad";
+        if (value >= 88) return "warn";
+        return "good";
+      }
+      if (key === "hrv") {
+        if (value < 28) return "bad";
+        if (value < 45) return "warn";
+        return "good";
+      }
+      if (key === "respiration") {
+        if (value >= 23) return "bad";
+        if (value >= 18) return "warn";
+        return "good";
+      }
+      if (key === "stress") {
+        if (value >= 75) return "bad";
+        if (value >= 50) return "warn";
+        return "good";
+      }
+      return "good";
+    }
+
+    function statusColor(status) {
+      if (status === "bad") return "var(--bad)";
+      if (status === "warn") return "var(--warn)";
+      return "var(--good)";
+    }
+
+    function riskScore() {
+      const hr = metrics.heartRate.value;
+      const hrv = metrics.hrv.value;
+      const rr = metrics.respiration.value;
+      const stress = metrics.stress.value;
+
+      let score = 0;
+      score += clamp((hr - 70) / 45, 0, 1) * 28;
+      score += clamp((55 - hrv) / 45, 0, 1) * 28;
+      score += clamp((rr - 12) / 14, 0, 1) * 22;
+      score += clamp(stress / 100, 0, 1) * 22;
+      return Math.round(score);
+    }
+
+    function getAdvice() {
+      const score = riskScore();
+      const hr = metrics.heartRate.value;
+      const hrv = metrics.hrv.value;
+      const rr = metrics.respiration.value;
+      const stress = metrics.stress.value;
+
+      if (score >= 70) {
+        return {
+          level: "HIGH LOAD",
+          className: "level-high",
+          title: "Switch to grounding before deeper breathing.",
+          body: [
+            "Your simulated readings suggest a high activation state.",
+            "Keep your eyes open. Name five things you can see, press both feet into the floor, then use a smaller inhale and a longer exhale.",
+            "Avoid forcing slow breathing. The first goal is orientation and control, not relaxation."
+          ],
+          exercise: "Grounding cycle: look around, unclench jaw, drop shoulders, inhale gently for 3, exhale for 5."
+        };
+      }
+
+      if (hr > 95 && rr > 18) {
+        return {
+          level: "ELEVATED",
+          className: "level-watch",
+          title: "Slow the breathing rhythm.",
+          body: [
+            "Heart rate and respiration are both elevated in the dummy data.",
+            "Make the inhale smaller. Let the exhale do most of the work. Try 3 seconds in, 6 seconds out for the next minute."
+          ],
+          exercise: "Breathing cue: inhale 3, exhale 6. Keep the exhale quiet and controlled."
+        };
+      }
+
+      if (hrv < 35 || stress > 60) {
+        return {
+          level: "WATCH",
+          className: "level-watch",
+          title: "Extend the exhale and reduce effort.",
+          body: [
+            "The pattern suggests incomplete recovery in the dummy data.",
+            "Try less effort, not more. Let the belly and ribs soften on each exhale. Continue for two minutes."
+          ],
+          exercise: "Recovery cue: inhale normally, exhale slowly, pause for one comfortable beat."
+        };
+      }
+
+      return {
+        level: "RECOVERING",
+        className: "level-good",
+        title: "Stay with the current pace.",
+        body: [
+          "The dummy values are in a steadier range.",
+          "Continue the routine. Keep breathing low and slow, and let your attention rest on physical contact points: feet, chair, hands."
+        ],
+        exercise: "Maintenance cue: steady breathing, relaxed shoulders, attention on contact points."
+      };
+    }
+
+    function renderBioData() {
+      bioList.innerHTML = "";
+
+      Object.entries(metrics).forEach(([key, metric]) => {
+        const percent = ((metric.value - metric.min) / (metric.max - metric.min)) * 100;
+        const status = metricStatus(key, metric.value);
+
+        const row = document.createElement("div");
+        row.className = "bio-row";
+        row.innerHTML = `
+          <div>
+            <div class="metric-title">
+              <strong>${metric.label}</strong>
+              <span>${metric.value} ${metric.unit}</span>
+            </div>
+            <div class="bar"><div class="bar-fill" style="width: ${percent}%; background: ${statusColor(status)}"></div></div>
+          </div>
+          <div class="mini-controls">
+            <button aria-label="Decrease ${metric.label}" data-key="${key}" data-direction="down">−</button>
+            <button aria-label="Increase ${metric.label}" data-key="${key}" data-direction="up">+</button>
+          </div>
+        `;
+        bioList.appendChild(row);
+      });
+
+      document.querySelectorAll(".mini-controls button").forEach(button => {
+        button.addEventListener("click", () => {
+          const key = button.dataset.key;
+          const direction = button.dataset.direction;
+          const metric = metrics[key];
+          const delta = direction === "up" ? metric.step : -metric.step;
+          metric.value = clamp(metric.value + delta, metric.min, metric.max);
+          renderBioData();
+          updateAdvice();
+        });
+      });
+    }
+
+    function updateAdvice() {
+      const advice = getAdvice();
+      adviceBox.innerHTML = `
+        <span class="advice-level ${advice.className}">${advice.level}</span>
+        <h3>${advice.title}</h3>
+        ${advice.body.map(line => `<p>${line}</p>`).join("")}
+      `;
+      exerciseText.textContent = advice.exercise;
+    }
+
+    function formatTime(totalSeconds) {
+      const mins = String(Math.floor(totalSeconds / 60)).padStart(2, "0");
+      const secs = String(totalSeconds % 60).padStart(2, "0");
+      return `${mins}:${secs}`;
+    }
+
+    function startBreathAnimation() {
+      let expanded = false;
+      breathCircle.textContent = "Inhale";
+      breathCircle.classList.add("expand");
+      expanded = true;
+
+      breathInterval = setInterval(() => {
+        expanded = !expanded;
+        breathCircle.classList.toggle("expand", expanded);
+        breathCircle.textContent = expanded ? "Inhale" : "Exhale";
+      }, 4000);
+    }
+
+    function simulateGentleDrift() {
+      Object.values(metrics).forEach(metric => {
+        const change = randomInt(-1, 1) * metric.step;
+        metric.value = clamp(metric.value + change, metric.min, metric.max);
+      });
+      renderBioData();
+      updateAdvice();
+    }
+
+    function startRoutine() {
+      isRunning = true;
+      seconds = 0;
+      feedbackBox.classList.add("hidden");
+      feedbackBox.innerHTML = "";
+      randomizeData();
+      startedAtValues = Object.fromEntries(Object.entries(metrics).map(([key, metric]) => [key, metric.value]));
+
+      statusDot.classList.add("active");
+      statusText.textContent = "Routine active";
+      startBtn.disabled = true;
+      stopBtn.disabled = false;
+      timer.textContent = "00:00";
+
+      timerInterval = setInterval(() => {
+        seconds += 1;
+        timer.textContent = formatTime(seconds);
+      }, 1000);
+
+      driftInterval = setInterval(simulateGentleDrift, 5000);
+      startBreathAnimation();
+      updateAdvice();
+    }
+
+    function feedbackLine(label, start, end, lowerIsBetter) {
+      const delta = end - start;
+      const improved = lowerIsBetter ? delta < 0 : delta > 0;
+      const unchanged = delta === 0;
+      const sign = delta > 0 ? "+" : "";
+
+      if (unchanged) return `${label}: no change.`;
+      return `${label}: ${sign}${delta} ${improved ? "— moved in a recovery-friendly direction." : "— may need more downshift time."}`;
+    }
+
+    function stopRoutine() {
+      isRunning = false;
+      clearInterval(timerInterval);
+      clearInterval(driftInterval);
+      clearInterval(breathInterval);
+      timerInterval = null;
+      driftInterval = null;
+      breathInterval = null;
+
+      statusDot.classList.remove("active");
+      statusText.textContent = "Routine stopped";
+      startBtn.disabled = false;
+      stopBtn.disabled = true;
+      breathCircle.textContent = "Stopped";
+      breathCircle.classList.remove("expand");
+
+      const currentScore = riskScore();
+      const startScore = startedAtValues ? calculateScoreFromValues(startedAtValues) : currentScore;
+      const scoreChange = currentScore - startScore;
+      const summary = scoreChange < -8
+        ? "Good recovery response in the simulated data."
+        : scoreChange > 8
+          ? "Activation increased in the simulated data. Try a shorter grounding routine before slow breathing."
+          : "Mixed or stable response in the simulated data. Continue with a low-effort reset routine.";
+
+      feedbackBox.classList.remove("hidden");
+      feedbackBox.innerHTML = `
+        <h3>Routine feedback</h3>
+        <p><strong>Duration:</strong> ${formatTime(seconds)}</p>
+        <p><strong>Summary:</strong> ${summary}</p>
+        <ul>
+          <li>${feedbackLine("Heart rate", startedAtValues.heartRate, metrics.heartRate.value, true)}</li>
+          <li>${feedbackLine("HRV", startedAtValues.hrv, metrics.hrv.value, false)}</li>
+          <li>${feedbackLine("Respiration", startedAtValues.respiration, metrics.respiration.value, true)}</li>
+          <li>${feedbackLine("Stress load", startedAtValues.stress, metrics.stress.value, true)}</li>
+        </ul>
+      `;
+    }
+
+    function calculateScoreFromValues(values) {
+      let score = 0;
+      score += clamp((values.heartRate - 70) / 45, 0, 1) * 28;
+      score += clamp((55 - values.hrv) / 45, 0, 1) * 28;
+      score += clamp((values.respiration - 12) / 14, 0, 1) * 22;
+      score += clamp(values.stress / 100, 0, 1) * 22;
+      return Math.round(score);
+    }
+
+    startBtn.addEventListener("click", startRoutine);
+    stopBtn.addEventListener("click", stopRoutine);
+    randomizeBtn.addEventListener("click", randomizeData);
+
+    renderBioData();
+    updateAdvice();
+  </script>
+</body>
+</html>
