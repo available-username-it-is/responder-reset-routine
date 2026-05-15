@@ -328,6 +328,131 @@
       font-size: 0.88rem;
       line-height: 1.5;
     }
+
+    .page-nav {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin: 18px 0 22px;
+    }
+
+    .page-nav button {
+      background: #1f2937;
+      border: 1px solid rgba(148, 163, 184, 0.25);
+    }
+
+    .page-nav button.active {
+      background: var(--button);
+      border-color: rgba(147, 197, 253, 0.65);
+    }
+
+    .page {
+      display: none;
+    }
+
+    .page.active {
+      display: block;
+    }
+
+    .device-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-top: 14px;
+    }
+
+    @media (max-width: 700px) {
+      .device-grid { grid-template-columns: 1fr; }
+    }
+
+    .device-card {
+      border: 1px solid var(--border);
+      background: rgba(31, 41, 55, 0.72);
+      border-radius: 18px;
+      padding: 16px;
+    }
+
+    .device-card h3 {
+      margin: 0 0 8px;
+    }
+
+    .device-state {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin: 8px 0 12px;
+      padding: 7px 11px;
+      border-radius: 999px;
+      background: #334155;
+      color: var(--text);
+      font-size: 0.84rem;
+      font-weight: 800;
+    }
+
+    .pulse-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      background: var(--muted);
+    }
+
+    .pulse-dot.on {
+      background: var(--accent);
+      box-shadow: 0 0 0 8px rgba(96, 165, 250, 0.13);
+    }
+
+    .stim-visual {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+      align-items: center;
+      margin: 16px 0;
+    }
+
+    .side-pad {
+      min-height: 180px;
+      border-radius: 28px;
+      border: 1px solid rgba(148, 163, 184, 0.24);
+      background: rgba(15, 23, 42, 0.72);
+      display: grid;
+      place-items: center;
+      text-align: center;
+      font-weight: 900;
+      color: var(--muted);
+      transition: transform 0.18s ease, background 0.18s ease, color 0.18s ease, border-color 0.18s ease;
+    }
+
+    .side-pad.active-pulse {
+      transform: scale(1.035);
+      background: rgba(96, 165, 250, 0.2);
+      color: #dbeafe;
+      border-color: rgba(96, 165, 250, 0.75);
+    }
+
+    .settings-grid {
+      display: grid;
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    .setting-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      align-items: center;
+      padding: 14px;
+      border-radius: 18px;
+      border: 1px solid var(--border);
+      background: rgba(31, 41, 55, 0.72);
+    }
+
+    .small-muted {
+      color: var(--muted);
+      font-size: 0.88rem;
+      line-height: 1.45;
+      margin: 4px 0 0;
+    }
+
   </style>
 </head>
 <body>
@@ -339,7 +464,13 @@
       </p>
     </header>
 
-    <section class="grid">
+    <nav class="page-nav" aria-label="Prototype pages">
+      <button id="resetPageBtn" class="active" type="button">Reset routine</button>
+      <button id="bilateralPageBtn" type="button">Bilateral stimulation concept</button>
+    </nav>
+
+    <section id="resetPage" class="page active">
+      <section class="grid">
       <div class="card">
         <div class="routine-status">
           <div class="status-pill"><span id="statusDot" class="dot"></span><span id="statusText">Routine idle</span></div>
@@ -380,6 +511,89 @@
 
         <div id="feedbackBox" class="feedback hidden"></div>
       </div>
+      </section>
+    </section>
+
+    <section id="bilateralPage" class="page">
+      <section class="grid">
+        <div class="card">
+          <h2>Bilateral stimulation routine</h2>
+          <p class="subtitle">
+            Concept page for a two-device setup: one vibration unit on the left side and one on the right side.
+            This prototype simulates alternating pulses and gives text guidance from dummy bio data.
+          </p>
+
+          <div class="stim-visual" aria-label="Left and right stimulation visualizer">
+            <div id="leftPad" class="side-pad">LEFT DEVICE<br><span class="small-muted">waiting</span></div>
+            <div id="rightPad" class="side-pad">RIGHT DEVICE<br><span class="small-muted">waiting</span></div>
+          </div>
+
+          <div class="device-grid">
+            <div class="device-card">
+              <h3>Left device</h3>
+              <div class="device-state"><span id="leftPulseDot" class="pulse-dot"></span><span id="leftState">Idle</span></div>
+              <p class="small-muted">Represents a vibration puck, wrist unit, shoulder strap, or belt-mounted haptic module.</p>
+            </div>
+            <div class="device-card">
+              <h3>Right device</h3>
+              <div class="device-state"><span id="rightPulseDot" class="pulse-dot"></span><span id="rightState">Idle</span></div>
+              <p class="small-muted">Pulses alternate left-right to create a simple bilateral rhythm.</p>
+            </div>
+          </div>
+
+          <div class="settings-grid">
+            <div class="setting-row">
+              <div>
+                <strong>Pulse speed</strong>
+                <p class="small-muted"><span id="pulseSpeedValue">700</span> ms between sides</p>
+              </div>
+              <div class="mini-controls">
+                <button id="speedDown" aria-label="Decrease pulse speed">−</button>
+                <button id="speedUp" aria-label="Increase pulse speed">+</button>
+              </div>
+            </div>
+
+            <div class="setting-row">
+              <div>
+                <strong>Intensity</strong>
+                <p class="small-muted"><span id="intensityValue">45</span>/100 simulated vibration strength</p>
+              </div>
+              <div class="mini-controls">
+                <button id="intensityDown" aria-label="Decrease intensity">−</button>
+                <button id="intensityUp" aria-label="Increase intensity">+</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="controls">
+            <button id="startStimBtn">Start bilateral stimulation</button>
+            <button id="stopStimBtn" class="stop-btn" disabled>Stop stimulation</button>
+            <button id="stimRandomizeBtn" class="secondary-btn">Randomize bio data</button>
+          </div>
+
+          <p class="note">
+            Prototype note: this page does not control real hardware. Actual two-sided vibration requires compatible haptic devices, pairing, device safety limits, and explicit user control.
+          </p>
+        </div>
+
+        <div class="card">
+          <h2>Bilateral guidance</h2>
+          <div id="stimAdviceBox" class="advice-box">
+            <span class="advice-level level-watch">READY</span>
+            <h3>Start when the responder is safe and oriented.</h3>
+            <p>Use low intensity first. The app will suggest speed and intensity changes based on dummy bio data.</p>
+          </div>
+
+          <div class="exercise-card">
+            <h2>How the prompt would work</h2>
+            <p id="stimExerciseText" class="subtitle">
+              Place one device on the left side and one on the right side. Keep eyes open at first. Notice the left pulse, then the right pulse, while breathing normally.
+            </p>
+          </div>
+
+          <div id="stimFeedbackBox" class="feedback hidden"></div>
+        </div>
+      </section>
     </section>
   </main>
 
@@ -442,6 +656,39 @@
     const breathCircle = document.getElementById("breathCircle");
     const exerciseText = document.getElementById("exerciseText");
 
+    const resetPageBtn = document.getElementById("resetPageBtn");
+    const bilateralPageBtn = document.getElementById("bilateralPageBtn");
+    const resetPage = document.getElementById("resetPage");
+    const bilateralPage = document.getElementById("bilateralPage");
+
+    const leftPad = document.getElementById("leftPad");
+    const rightPad = document.getElementById("rightPad");
+    const leftPulseDot = document.getElementById("leftPulseDot");
+    const rightPulseDot = document.getElementById("rightPulseDot");
+    const leftState = document.getElementById("leftState");
+    const rightState = document.getElementById("rightState");
+    const pulseSpeedValue = document.getElementById("pulseSpeedValue");
+    const intensityValue = document.getElementById("intensityValue");
+    const speedDown = document.getElementById("speedDown");
+    const speedUp = document.getElementById("speedUp");
+    const intensityDown = document.getElementById("intensityDown");
+    const intensityUp = document.getElementById("intensityUp");
+    const startStimBtn = document.getElementById("startStimBtn");
+    const stopStimBtn = document.getElementById("stopStimBtn");
+    const stimRandomizeBtn = document.getElementById("stimRandomizeBtn");
+    const stimAdviceBox = document.getElementById("stimAdviceBox");
+    const stimExerciseText = document.getElementById("stimExerciseText");
+    const stimFeedbackBox = document.getElementById("stimFeedbackBox");
+
+    let stimRunning = false;
+    let stimInterval = null;
+    let stimSeconds = 0;
+    let stimTimerInterval = null;
+    let pulseSide = "left";
+    let pulseSpeed = 700;
+    let intensity = 45;
+    let stimStartedAtValues = null;
+
     function clamp(value, min, max) {
       return Math.max(min, Math.min(max, value));
     }
@@ -457,6 +704,7 @@
       metrics.stress.value = randomInt(15, 95);
       renderBioData();
       updateAdvice();
+      updateStimAdvice();
     }
 
     function metricStatus(key, value) {
@@ -596,6 +844,7 @@
           metric.value = clamp(metric.value + delta, metric.min, metric.max);
           renderBioData();
           updateAdvice();
+          updateStimAdvice();
         });
       });
     }
@@ -636,6 +885,7 @@
       });
       renderBioData();
       updateAdvice();
+      updateStimAdvice();
     }
 
     function startRoutine() {
@@ -720,12 +970,191 @@
       return Math.round(score);
     }
 
+
+    function showPage(pageName) {
+      const showReset = pageName === "reset";
+      resetPage.classList.toggle("active", showReset);
+      bilateralPage.classList.toggle("active", !showReset);
+      resetPageBtn.classList.toggle("active", showReset);
+      bilateralPageBtn.classList.toggle("active", !showReset);
+    }
+
+    function getStimAdvice() {
+      const score = riskScore();
+      const rr = metrics.respiration.value;
+      const stress = metrics.stress.value;
+      const hrv = metrics.hrv.value;
+
+      if (score >= 70 || rr >= 23) {
+        return {
+          level: "HIGH ACTIVATION",
+          className: "level-high",
+          title: "Use slower, lighter bilateral pulses.",
+          body: [
+            "Dummy readings suggest high activation. Keep the stimulation gentle and predictable.",
+            "Do not push for calm. First orient to the room, feel both feet, then notice left-right pulses at a slow pace."
+          ],
+          exercise: "Suggested cue: left, right, pause. Keep eyes open. Reduce intensity if the rhythm feels irritating or too strong."
+        };
+      }
+
+      if (stress >= 55 || hrv < 40) {
+        return {
+          level: "WATCH",
+          className: "level-watch",
+          title: "Stay moderate and pair it with normal breathing.",
+          body: [
+            "The simulated pattern suggests partial recovery but not full settling.",
+            "Use a steady left-right rhythm while breathing naturally. Avoid making the exercise too effortful."
+          ],
+          exercise: "Suggested cue: notice left pulse, notice right pulse, then relax jaw and shoulders. Continue for 60-90 seconds."
+        };
+      }
+
+      return {
+        level: "STEADY",
+        className: "level-good",
+        title: "Maintain the current bilateral rhythm.",
+        body: [
+          "Dummy values are in a steadier range.",
+          "Keep the pulse comfortable. Let attention move left to right without trying to force a specific emotional response."
+        ],
+        exercise: "Suggested cue: left-right, easy breath, feet on floor. Stop while it still feels comfortable."
+      };
+    }
+
+    function updateStimAdvice() {
+      const advice = getStimAdvice();
+      stimAdviceBox.innerHTML = `
+        <span class="advice-level ${advice.className}">${advice.level}</span>
+        <h3>${advice.title}</h3>
+        ${advice.body.map(line => `<p>${line}</p>`).join("")}
+      `;
+      stimExerciseText.textContent = advice.exercise;
+    }
+
+    function renderStimSettings() {
+      pulseSpeedValue.textContent = pulseSpeed;
+      intensityValue.textContent = intensity;
+    }
+
+    function clearPulseVisuals() {
+      leftPad.classList.remove("active-pulse");
+      rightPad.classList.remove("active-pulse");
+      leftPulseDot.classList.remove("on");
+      rightPulseDot.classList.remove("on");
+      leftState.textContent = stimRunning ? "Waiting" : "Idle";
+      rightState.textContent = stimRunning ? "Waiting" : "Idle";
+    }
+
+    function runPulseStep() {
+      clearPulseVisuals();
+      if (pulseSide === "left") {
+        leftPad.classList.add("active-pulse");
+        leftPulseDot.classList.add("on");
+        leftState.textContent = `Pulse ${intensity}/100`;
+        rightState.textContent = "Waiting";
+        pulseSide = "right";
+      } else {
+        rightPad.classList.add("active-pulse");
+        rightPulseDot.classList.add("on");
+        rightState.textContent = `Pulse ${intensity}/100`;
+        leftState.textContent = "Waiting";
+        pulseSide = "left";
+      }
+    }
+
+    function restartStimInterval() {
+      if (!stimRunning) return;
+      clearInterval(stimInterval);
+      stimInterval = setInterval(runPulseStep, pulseSpeed);
+    }
+
+    function startStimRoutine() {
+      stimRunning = true;
+      stimSeconds = 0;
+      pulseSide = "left";
+      stimFeedbackBox.classList.add("hidden");
+      stimFeedbackBox.innerHTML = "";
+      randomizeData();
+      stimStartedAtValues = Object.fromEntries(Object.entries(metrics).map(([key, metric]) => [key, metric.value]));
+      startStimBtn.disabled = true;
+      stopStimBtn.disabled = false;
+      runPulseStep();
+      stimInterval = setInterval(runPulseStep, pulseSpeed);
+      stimTimerInterval = setInterval(() => { stimSeconds += 1; }, 1000);
+      updateStimAdvice();
+    }
+
+    function stopStimRoutine() {
+      stimRunning = false;
+      clearInterval(stimInterval);
+      clearInterval(stimTimerInterval);
+      stimInterval = null;
+      stimTimerInterval = null;
+      clearPulseVisuals();
+      startStimBtn.disabled = false;
+      stopStimBtn.disabled = true;
+
+      const currentScore = riskScore();
+      const startScore = stimStartedAtValues ? calculateScoreFromValues(stimStartedAtValues) : currentScore;
+      const scoreChange = currentScore - startScore;
+      const summary = scoreChange < -8
+        ? "The dummy data moved in a recovery-friendly direction during bilateral stimulation."
+        : scoreChange > 8
+          ? "The dummy data became more activated. Use a slower pulse, lower intensity, or return to simple grounding."
+          : "The dummy data stayed mostly stable. Keep the routine short and comfortable.";
+
+      stimFeedbackBox.classList.remove("hidden");
+      stimFeedbackBox.innerHTML = `
+        <h3>Bilateral stimulation feedback</h3>
+        <p><strong>Duration:</strong> ${formatTime(stimSeconds)}</p>
+        <p><strong>Settings:</strong> ${pulseSpeed} ms pulse speed, ${intensity}/100 intensity</p>
+        <p><strong>Summary:</strong> ${summary}</p>
+        <ul>
+          <li>${feedbackLine("Heart rate", stimStartedAtValues.heartRate, metrics.heartRate.value, true)}</li>
+          <li>${feedbackLine("HRV", stimStartedAtValues.hrv, metrics.hrv.value, false)}</li>
+          <li>${feedbackLine("Respiration", stimStartedAtValues.respiration, metrics.respiration.value, true)}</li>
+          <li>${feedbackLine("Stress load", stimStartedAtValues.stress, metrics.stress.value, true)}</li>
+        </ul>
+      `;
+    }
+
     startBtn.addEventListener("click", startRoutine);
     stopBtn.addEventListener("click", stopRoutine);
     randomizeBtn.addEventListener("click", randomizeData);
+    resetPageBtn.addEventListener("click", () => showPage("reset"));
+    bilateralPageBtn.addEventListener("click", () => showPage("bilateral"));
+    startStimBtn.addEventListener("click", startStimRoutine);
+    stopStimBtn.addEventListener("click", stopStimRoutine);
+    stimRandomizeBtn.addEventListener("click", randomizeData);
+    speedDown.addEventListener("click", () => {
+      pulseSpeed = clamp(pulseSpeed - 100, 300, 1500);
+      renderStimSettings();
+      restartStimInterval();
+      updateStimAdvice();
+    });
+    speedUp.addEventListener("click", () => {
+      pulseSpeed = clamp(pulseSpeed + 100, 300, 1500);
+      renderStimSettings();
+      restartStimInterval();
+      updateStimAdvice();
+    });
+    intensityDown.addEventListener("click", () => {
+      intensity = clamp(intensity - 5, 5, 100);
+      renderStimSettings();
+      updateStimAdvice();
+    });
+    intensityUp.addEventListener("click", () => {
+      intensity = clamp(intensity + 5, 5, 100);
+      renderStimSettings();
+      updateStimAdvice();
+    });
 
     renderBioData();
+    renderStimSettings();
     updateAdvice();
+    updateStimAdvice();
   </script>
 </body>
 </html>
