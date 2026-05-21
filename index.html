@@ -3,832 +3,158 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Responder Reset Routine Prototype</title>
+  <title>Responder Recovery Demo</title>
   <style>
-    :root {
-      --bg: #0f172a;
-      --panel: #111827;
-      --panel-2: #1f2937;
-      --text: #e5e7eb;
-      --muted: #9ca3af;
-      --border: #374151;
-      --accent: #60a5fa;
-      --good: #34d399;
-      --warn: #fbbf24;
-      --bad: #f87171;
-      --button: #2563eb;
-      --button-hover: #1d4ed8;
-      --stop: #dc2626;
-      --stop-hover: #b91c1c;
+    :root{
+      --bg:#07111f;--panel:#0f1b2d;--panel2:#16253a;--card:#111f33;--text:#edf4ff;--muted:#9fb0c7;--line:#2a3d59;--blue:#5aa7ff;--green:#44d19d;--yellow:#ffd166;--red:#ff6b6b;--purple:#a78bfa;--dark:#08111f;
     }
-
-    * { box-sizing: border-box; }
-
-    body {
-      margin: 0;
-      font-family: Arial, Helvetica, sans-serif;
-      background: radial-gradient(circle at top, #172554 0%, var(--bg) 42%);
-      color: var(--text);
-      min-height: 100vh;
-      padding: 28px;
-    }
-
-    .app { max-width: 1180px; margin: 0 auto; }
-
-    header { margin-bottom: 18px; }
-
-    h1 {
-      margin: 0 0 8px;
-      font-size: clamp(2rem, 4vw, 3.4rem);
-      letter-spacing: -0.04em;
-    }
-
-    .subtitle {
-      margin: 0;
-      color: var(--muted);
-      max-width: 820px;
-      line-height: 1.55;
-      font-size: 1rem;
-    }
-
-    .tabs {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      margin: 20px 0;
-      padding: 8px;
-      background: rgba(15, 23, 42, 0.56);
-      border: 1px solid rgba(148, 163, 184, 0.18);
-      border-radius: 20px;
-    }
-
-    .tab-btn {
-      background: transparent;
-      border: 1px solid transparent;
-      color: var(--muted);
-      border-radius: 14px;
-    }
-
-    .tab-btn:hover:not(:disabled) { background: rgba(96, 165, 250, 0.12); color: var(--text); }
-    .tab-btn.active { background: var(--button); color: white; border-color: rgba(147, 197, 253, 0.3); }
-
-    .tab-panel { display: none; }
-    .tab-panel.active { display: block; }
-
-    .grid { display: grid; grid-template-columns: 1.05fr 0.95fr; gap: 18px; }
-    .chart-grid { display: grid; grid-template-columns: 1fr 320px; gap: 18px; }
-
-    @media (max-width: 900px) {
-      body { padding: 18px; }
-      .grid, .chart-grid { grid-template-columns: 1fr; }
-    }
-
-    .card {
-      background: rgba(17, 24, 39, 0.9);
-      border: 1px solid rgba(148, 163, 184, 0.2);
-      border-radius: 22px;
-      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.22);
-      padding: 20px;
-    }
-
-    .card h2 { margin: 0 0 14px; font-size: 1.2rem; }
-
-    .controls { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
-
-    button {
-      border: none;
-      border-radius: 14px;
-      padding: 12px 16px;
-      color: white;
-      background: var(--button);
-      font-weight: 700;
-      cursor: pointer;
-      transition: transform 0.12s ease, background 0.12s ease, opacity 0.12s ease;
-    }
-
-    button:hover:not(:disabled) { background: var(--button-hover); transform: translateY(-1px); }
-    button:disabled { cursor: not-allowed; opacity: 0.45; }
-    .stop-btn { background: var(--stop); }
-    .stop-btn:hover:not(:disabled) { background: var(--stop-hover); }
-    .secondary-btn { background: #374151; }
-    .secondary-btn:hover:not(:disabled) { background: #4b5563; }
-
-    .routine-status {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      padding: 14px;
-      border: 1px solid var(--border);
-      background: rgba(31, 41, 55, 0.7);
-      border-radius: 18px;
-      margin-bottom: 16px;
-    }
-
-    .status-pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 8px 12px;
-      border-radius: 999px;
-      background: #334155;
-      color: var(--text);
-      font-size: 0.9rem;
-      font-weight: 700;
-    }
-
-    .dot { width: 9px; height: 9px; border-radius: 999px; background: var(--muted); }
-    .dot.active { background: var(--good); box-shadow: 0 0 0 6px rgba(52, 211, 153, 0.12); }
-    .dot.pulse { background: var(--accent); box-shadow: 0 0 0 6px rgba(96, 165, 250, 0.14); }
-    .timer { color: var(--muted); font-variant-numeric: tabular-nums; font-weight: 700; }
-
-    .bio-list { display: grid; gap: 12px; }
-
-    .bio-row {
-      display: grid;
-      grid-template-columns: 1fr auto;
-      gap: 12px;
-      align-items: center;
-      padding: 14px;
-      border-radius: 18px;
-      border: 1px solid var(--border);
-      background: rgba(31, 41, 55, 0.72);
-    }
-
-    .metric-title { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
-    .metric-title strong { font-size: 0.98rem; }
-    .metric-title span { color: var(--muted); font-size: 0.92rem; font-variant-numeric: tabular-nums; }
-
-    .bar {
-      height: 10px;
-      border-radius: 999px;
-      background: #0b1220;
-      overflow: hidden;
-      border: 1px solid rgba(148, 163, 184, 0.16);
-    }
-
-    .bar-fill { height: 100%; width: 50%; border-radius: 999px; background: var(--accent); transition: width 0.25s ease, background 0.25s ease; }
-    .mini-controls { display: flex; gap: 6px; }
-    .mini-controls button { width: 38px; height: 38px; padding: 0; border-radius: 12px; background: #475569; font-size: 1.1rem; }
-
-    .advice-box {
-      min-height: 228px;
-      border-radius: 20px;
-      border: 1px solid rgba(96, 165, 250, 0.3);
-      background: linear-gradient(180deg, rgba(30, 64, 175, 0.24), rgba(31, 41, 55, 0.65));
-      padding: 18px;
-      line-height: 1.55;
-    }
-
-    .advice-box h3 { margin: 0 0 10px; font-size: 1.05rem; }
-    .advice-box p { margin: 8px 0; color: #dbeafe; }
-
-    .advice-level {
-      display: inline-block;
-      margin-bottom: 10px;
-      padding: 6px 10px;
-      border-radius: 999px;
-      font-weight: 800;
-      font-size: 0.82rem;
-      letter-spacing: 0.02em;
-    }
-
-    .level-good { background: rgba(52, 211, 153, 0.16); color: var(--good); }
-    .level-watch { background: rgba(251, 191, 36, 0.16); color: var(--warn); }
-    .level-high { background: rgba(248, 113, 113, 0.16); color: var(--bad); }
-
-    .exercise-card, .feedback, .chart-panel {
-      margin-top: 16px;
-      padding: 16px;
-      border-radius: 18px;
-      background: rgba(15, 23, 42, 0.72);
-      border: 1px solid var(--border);
-    }
-
-    .breath-circle-wrap { display: flex; justify-content: center; margin: 16px 0; }
-    .breath-circle {
-      width: 132px;
-      height: 132px;
-      border-radius: 50%;
-      display: grid;
-      place-items: center;
-      background: rgba(96, 165, 250, 0.18);
-      border: 2px solid rgba(96, 165, 250, 0.45);
-      color: #bfdbfe;
-      font-weight: 900;
-      letter-spacing: 0.03em;
-      transform: scale(0.86);
-      transition: transform 4s ease-in-out;
-      text-align: center;
-      padding: 12px;
-    }
-    .breath-circle.expand { transform: scale(1.08); }
-
-    .feedback h3 { margin: 0 0 10px; }
-    .feedback ul { margin: 10px 0 0; padding-left: 20px; color: var(--text); line-height: 1.55; }
-    .hidden { display: none; }
-    .note { margin-top: 14px; color: var(--muted); font-size: 0.88rem; line-height: 1.5; }
-
-    .bilateral-stage {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
-      margin-top: 18px;
-    }
-
-    @media (max-width: 720px) { .bilateral-stage { grid-template-columns: 1fr; } }
-
-    .vibe-device {
-      min-height: 180px;
-      border-radius: 24px;
-      border: 1px solid var(--border);
-      background: rgba(31, 41, 55, 0.78);
-      display: grid;
-      place-items: center;
-      text-align: center;
-      padding: 22px;
-      transition: transform 0.18s ease, border 0.18s ease, background 0.18s ease;
-    }
-
-    .vibe-device.active {
-      transform: scale(1.025);
-      border-color: rgba(96, 165, 250, 0.9);
-      background: rgba(37, 99, 235, 0.28);
-    }
-
-    .vibe-device strong { display: block; font-size: 1.4rem; margin-bottom: 8px; }
-    .slider-row { margin: 14px 0; }
-    .slider-row label { display: flex; justify-content: space-between; color: var(--muted); margin-bottom: 8px; }
-    input[type="range"] { width: 100%; }
-
-    canvas {
-      width: 100%;
-      height: 430px;
-      display: block;
-      border-radius: 18px;
-      border: 1px solid var(--border);
-      background: rgba(15, 23, 42, 0.82);
-    }
-
-    .legend { display: grid; gap: 10px; margin-top: 12px; }
-    .legend-item { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px; border: 1px solid var(--border); border-radius: 14px; background: rgba(31, 41, 55, 0.72); }
-    .legend-left { display: flex; align-items: center; gap: 10px; }
-    .swatch { width: 18px; height: 4px; border-radius: 999px; background: var(--accent); }
-    .chart-controls { display: grid; gap: 10px; }
-    .chart-controls button { width: 100%; }
+    *{box-sizing:border-box} body{margin:0;font-family:Inter,Arial,Helvetica,sans-serif;background:radial-gradient(circle at top left,#183b75 0%,var(--bg) 35%,#050914 100%);color:var(--text);min-height:100vh;padding:24px} .app{max-width:1220px;margin:0 auto} header{display:flex;justify-content:space-between;gap:18px;align-items:flex-start;margin-bottom:18px} h1{margin:0;font-size:clamp(2rem,4vw,3.55rem);letter-spacing:-.05em;line-height:.95}.subtitle{max-width:850px;color:var(--muted);line-height:1.55;margin:10px 0 0}.privacy-badge{border:1px solid rgba(68,209,157,.35);background:rgba(68,209,157,.10);color:#b7ffe2;border-radius:999px;padding:10px 13px;font-weight:800;white-space:nowrap}.tabs{display:flex;gap:8px;flex-wrap:wrap;padding:8px;background:rgba(8,17,31,.72);border:1px solid rgba(159,176,199,.18);border-radius:20px;margin:18px 0}.tab{border:none;background:transparent;color:var(--muted);padding:12px 14px;border-radius:14px;font-weight:800;cursor:pointer}.tab.active{background:var(--blue);color:white}.tab:hover{background:rgba(90,167,255,.16);color:white}.panel{display:none}.panel.active{display:block}.grid{display:grid;grid-template-columns:1.05fr .95fr;gap:18px}.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.chart-grid{display:grid;grid-template-columns:1fr 330px;gap:18px}@media(max-width:900px){body{padding:16px}header,.grid,.chart-grid,.grid3{grid-template-columns:1fr;display:grid}.privacy-badge{white-space:normal}}.card{background:rgba(15,27,45,.92);border:1px solid rgba(159,176,199,.18);border-radius:22px;box-shadow:0 22px 60px rgba(0,0,0,.28);padding:20px}.card h2{margin:0 0 12px;font-size:1.2rem}.card h3{margin:0 0 10px;font-size:1rem}.muted{color:var(--muted);line-height:1.5}.controls{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}button{border:none;border-radius:14px;background:#276bd8;color:white;font-weight:800;padding:12px 15px;cursor:pointer;transition:.12s}button:hover:not(:disabled){transform:translateY(-1px);background:#1f5fc4}button:disabled{opacity:.45;cursor:not-allowed}.stop{background:#c73535}.stop:hover:not(:disabled){background:#a62828}.secondary{background:#33445c}.secondary:hover:not(:disabled){background:#415672}.success{background:#148557}.success:hover:not(:disabled){background:#0f7049}.warning{background:#a06a00}.warning:hover:not(:disabled){background:#875a00}.status{display:flex;justify-content:space-between;gap:12px;align-items:center;background:rgba(22,37,58,.72);border:1px solid var(--line);border-radius:18px;padding:14px;margin-bottom:14px}.pill{display:inline-flex;gap:8px;align-items:center;border-radius:999px;padding:8px 11px;font-weight:900;background:#26364e}.dot{width:9px;height:9px;border-radius:999px;background:var(--muted)}.dot.on{background:var(--green);box-shadow:0 0 0 6px rgba(68,209,157,.13)}.dot.warn{background:var(--yellow)}.dot.red{background:var(--red)}.timer{font-variant-numeric:tabular-nums;color:var(--muted);font-weight:900}.metric-list{display:grid;gap:12px}.metric{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;background:rgba(22,37,58,.78);border:1px solid var(--line);border-radius:18px;padding:14px}.metric-head{display:flex;justify-content:space-between;margin-bottom:9px;gap:12px}.metric-head span{color:var(--muted);font-variant-numeric:tabular-nums}.bar{height:10px;border:1px solid rgba(159,176,199,.16);background:#07111f;border-radius:999px;overflow:hidden}.fill{height:100%;width:50%;border-radius:999px;background:var(--blue);transition:.2s}.mini{display:flex;gap:6px}.mini button{width:38px;height:38px;padding:0;background:#435773}.advice{min-height:220px;background:linear-gradient(180deg,rgba(39,107,216,.25),rgba(22,37,58,.65));border:1px solid rgba(90,167,255,.32);border-radius:20px;padding:18px;line-height:1.55}.advice p{margin:8px 0;color:#dbeafe}.level{display:inline-block;padding:6px 10px;border-radius:999px;font-size:.8rem;font-weight:900}.good{background:rgba(68,209,157,.14);color:var(--green)}.watch{background:rgba(255,209,102,.14);color:var(--yellow)}.high{background:rgba(255,107,107,.14);color:var(--red)}.exercise,.feedback,.note{margin-top:14px;padding:16px;border-radius:18px;background:rgba(8,17,31,.70);border:1px solid var(--line)}.breath-wrap{display:flex;justify-content:center;margin:16px 0}.breath{width:136px;height:136px;border-radius:50%;display:grid;place-items:center;background:rgba(90,167,255,.16);border:2px solid rgba(90,167,255,.45);font-weight:1000;color:#cfe7ff;transform:scale(.88)}.breath.running{animation:breathe 8s ease-in-out infinite}@keyframes breathe{0%,100%{transform:scale(.82)}42%{transform:scale(1.08)}60%{transform:scale(1.08)}}.device-row{display:grid;grid-template-columns:1fr 1fr;gap:14px}.device{min-height:180px;border-radius:22px;border:1px solid var(--line);background:rgba(22,37,58,.72);display:grid;place-items:center;text-align:center;padding:18px}.device .orb{width:82px;height:82px;border-radius:50%;background:rgba(159,176,199,.18);border:2px solid rgba(159,176,199,.28);margin:0 auto 12px}.device.active.left .orb{background:rgba(90,167,255,.35);box-shadow:0 0 0 18px rgba(90,167,255,.10)}.device.active.right .orb{background:rgba(167,139,250,.35);box-shadow:0 0 0 18px rgba(167,139,250,.10)}label{display:block;color:var(--muted);font-weight:800;margin:12px 0 8px}input[type=range]{width:100%}.share-box{display:grid;gap:12px}.share-row{display:flex;gap:12px;align-items:flex-start;padding:14px;border-radius:16px;border:1px solid var(--line);background:rgba(22,37,58,.72)}.share-row input{margin-top:3px}.kpi{padding:16px;border-radius:18px;background:rgba(22,37,58,.72);border:1px solid var(--line)}.kpi strong{display:block;font-size:1.75rem;margin-bottom:4px}.decision{border-left:4px solid var(--blue);padding:13px 14px;background:rgba(90,167,255,.10);border-radius:14px;margin:10px 0}.decision.warn{border-left-color:var(--yellow);background:rgba(255,209,102,.10)}.decision.red{border-left-color:var(--red);background:rgba(255,107,107,.10)}canvas{width:100%;height:390px;background:rgba(8,17,31,.75);border:1px solid var(--line);border-radius:18px}.legend{display:grid;gap:8px;margin-top:10px}.legend div{display:flex;justify-content:space-between;color:var(--muted);font-size:.92rem}.table{width:100%;border-collapse:collapse;margin-top:10px}.table th,.table td{text-align:left;border-bottom:1px solid var(--line);padding:10px;color:var(--muted)}.table th{color:var(--text)}.small{font-size:.88rem;color:var(--muted);line-height:1.45}.hidden{display:none!important}.tag{display:inline-block;border:1px solid var(--line);background:rgba(22,37,58,.72);border-radius:999px;padding:7px 10px;color:#d9e8ff;font-weight:800;font-size:.82rem;margin:3px}.local{color:#b7ffe2;font-weight:900}.footer{margin-top:20px;color:var(--muted);font-size:.9rem;line-height:1.5}
   </style>
 </head>
 <body>
-  <main class="app">
-    <header>
-      <h1>Responder Reset Routine</h1>
-      <p class="subtitle">Browser-only prototype using dummy biometric data. It includes adaptive reset guidance, a bilateral stimulation concept screen, and a live data chart that can be opened at any time.</p>
-    </header>
+<div class="app">
+  <header>
+    <div>
+      <h1>Responder Recovery Demo</h1>
+      <p class="subtitle">A browser-only concept demo for first responders: biometric-guided reset routines, bilateral stimulation, private recovery trends, optional sharing, and an anonymous commander view. Dummy data only.</p>
+    </div>
+    <div class="privacy-badge">Local-first demo · No backend</div>
+  </header>
 
-    <nav class="tabs" aria-label="Prototype pages">
-      <button class="tab-btn active" data-tab="resetTab">Reset routine</button>
-      <button class="tab-btn" data-tab="bilateralTab">Bilateral stimulation</button>
-      <button class="tab-btn" data-tab="chartTab">Data chart</button>
-    </nav>
+  <nav class="tabs" aria-label="App sections">
+    <button class="tab active" data-tab="reset">Reset routine</button>
+    <button class="tab" data-tab="bilateral">Bilateral stimulation</button>
+    <button class="tab" data-tab="chart">Data chart</button>
+    <button class="tab" data-tab="privacy">Sharing & privacy</button>
+    <button class="tab" data-tab="commander">Commander view</button>
+  </nav>
 
-    <section id="resetTab" class="tab-panel active">
-      <section class="grid">
-        <div class="card">
-          <div class="routine-status">
-            <div class="status-pill"><span id="statusDot" class="dot"></span><span id="statusText">Routine idle</span></div>
-            <div id="timer" class="timer">00:00</div>
-          </div>
-
-          <h2>Bio data</h2>
-          <div id="bioList" class="bio-list"></div>
-
-          <div class="controls">
-            <button id="startBtn">Start reset routine</button>
-            <button id="stopBtn" class="stop-btn" disabled>Stop routine</button>
-            <button id="randomizeBtn" class="secondary-btn">Randomize bio data</button>
-          </div>
-
-          <p class="note">Prototype note: values are simulated and advice is rule-based. This is not a medical tool, diagnostic tool, or fitness-for-duty system.</p>
+  <section id="reset" class="panel active">
+    <div class="grid">
+      <div class="card">
+        <div class="status"><span class="pill"><span id="routineDot" class="dot"></span><span id="routineState">Routine idle</span></span><span class="timer" id="routineTimer">00:00</span></div>
+        <h2>Private reset routine</h2>
+        <p class="muted">Start a session to generate simulated bio data. Use the +/- controls to test how the coaching changes. In a real app, these values would come from a wearable or chest strap.</p>
+        <div class="controls">
+          <button id="startRoutine">Start reset routine</button>
+          <button id="stopRoutine" class="stop" disabled>Stop routine</button>
+          <button id="randomize" class="secondary">Randomize data</button>
         </div>
-
-        <div class="card">
-          <h2>Live guidance</h2>
-          <div id="adviceBox" class="advice-box">
-            <span class="advice-level level-watch">READY</span>
-            <h3>Press “Start reset routine” to begin.</h3>
-            <p>The app will generate dummy data and suggest a recovery exercise based on the current readings.</p>
-          </div>
-
-          <div class="exercise-card">
-            <h2>Exercise cue</h2>
-            <div class="breath-circle-wrap"><div id="breathCircle" class="breath-circle">Ready</div></div>
-            <p id="exerciseText" class="subtitle">When the routine starts, follow the breathing or grounding guidance. The advice will adapt as the dummy values change.</p>
-          </div>
-
-          <div id="feedbackBox" class="feedback hidden"></div>
+        <div class="exercise">
+          <h3>Current exercise: Downshift breathing</h3>
+          <div class="breath-wrap"><div id="breathCircle" class="breath">READY</div></div>
+          <p id="breathCue" class="muted">Press start, then follow the inhale / hold / exhale cue. If the data looks more activated, the advice will adapt.</p>
         </div>
-      </section>
-    </section>
+        <div class="feedback hidden" id="routineFeedback"></div>
+      </div>
+      <div class="card">
+        <h2>Live dummy biometrics</h2>
+        <div id="metrics" class="metric-list"></div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:18px">
+      <h2>Adaptive advice</h2>
+      <div id="advice" class="advice"></div>
+    </div>
+  </section>
 
-    <section id="bilateralTab" class="tab-panel">
-      <section class="grid">
-        <div class="card">
-          <div class="routine-status">
-            <div class="status-pill"><span id="bilateralDot" class="dot"></span><span id="bilateralStatus">Bilateral routine idle</span></div>
-            <div id="bilateralTimer" class="timer">00:00</div>
-          </div>
-
-          <h2>Bilateral stimulation concept</h2>
-          <p class="subtitle">A concept page for two vibration devices strapped to the left and right sides of the body. This prototype only simulates alternating pulses on screen.</p>
-
-          <div class="bilateral-stage">
-            <div id="leftDevice" class="vibe-device"><div><strong>Left device</strong><span>Waiting</span></div></div>
-            <div id="rightDevice" class="vibe-device"><div><strong>Right device</strong><span>Waiting</span></div></div>
-          </div>
-
-          <div class="slider-row">
-            <label for="pulseSpeed"><span>Pulse speed</span><strong><span id="pulseSpeedLabel">900</span> ms</strong></label>
-            <input id="pulseSpeed" type="range" min="300" max="1600" step="100" value="900" />
-          </div>
-
-          <div class="slider-row">
-            <label for="pulseIntensity"><span>Intensity</span><strong><span id="pulseIntensityLabel">50</span>%</strong></label>
-            <input id="pulseIntensity" type="range" min="10" max="100" step="5" value="50" />
-          </div>
-
-          <div class="controls">
-            <button id="startBilateralBtn">Start bilateral stimulation</button>
-            <button id="stopBilateralBtn" class="stop-btn" disabled>Stop bilateral stimulation</button>
-          </div>
-
-          <p class="note">Hardware note: a real implementation would need paired device firmware, safety limits, consent flows, and a clear way to immediately stop stimulation.</p>
+  <section id="bilateral" class="panel">
+    <div class="grid">
+      <div class="card">
+        <div class="status"><span class="pill"><span id="bilateralDot" class="dot"></span><span id="bilateralState">Bilateral routine idle</span></span><span class="timer" id="bilateralTimer">00:00</span></div>
+        <h2>Bilateral stimulation concept</h2>
+        <p class="muted">This page simulates two vibration devices strapped to the left and right sides of the body. The demo alternates pulses and adapts the suggestion based on the dummy biometrics.</p>
+        <div class="device-row">
+          <div id="leftDevice" class="device"><div><div class="orb"></div><strong>Left device</strong><p class="muted">Waiting</p></div></div>
+          <div id="rightDevice" class="device"><div><div class="orb"></div><strong>Right device</strong><p class="muted">Waiting</p></div></div>
         </div>
-
-        <div class="card">
-          <h2>Adaptive suggestion</h2>
-          <div id="bilateralAdviceBox" class="advice-box">
-            <span class="advice-level level-watch">READY</span>
-            <h3>Start when seated and safe.</h3>
-            <p>The app will suggest a conservative bilateral rhythm based on the current dummy bio data.</p>
-          </div>
-          <div id="bilateralFeedbackBox" class="feedback hidden"></div>
+        <div class="controls">
+          <button id="startBilateral">Start bilateral routine</button>
+          <button id="stopBilateral" class="stop" disabled>Stop bilateral routine</button>
         </div>
-      </section>
-    </section>
+        <label for="pulseSpeed">Pulse speed</label><input id="pulseSpeed" type="range" min="450" max="1800" value="900" />
+        <label for="pulseIntensity">Intensity</label><input id="pulseIntensity" type="range" min="1" max="10" value="4" />
+        <div class="feedback hidden" id="bilateralFeedback"></div>
+      </div>
+      <div class="card">
+        <h2>Guidance</h2>
+        <div id="bilateralAdvice" class="advice"></div>
+        <div class="note"><strong>Safety note:</strong><p class="small">This is a non-clinical demo. A real product should avoid trauma-treatment claims unless clinically validated, and should let the responder stop instantly, reduce intensity, or switch to grounding.</p></div>
+      </div>
+    </div>
+  </section>
 
-    <section id="chartTab" class="tab-panel">
-      <section class="chart-grid">
-        <div class="card">
-          <h2>Biometric data over time</h2>
-          <p class="subtitle">This chart logs dummy readings when you randomize data, adjust values manually, start/stop routines, or while routines are running.</p>
-          <div class="chart-panel"><canvas id="historyChart" width="980" height="430" aria-label="Biometric history chart"></canvas></div>
-          <div id="chartLegend" class="legend"></div>
+  <section id="chart" class="panel">
+    <div class="chart-grid">
+      <div class="card"><h2>Data over time</h2><canvas id="historyCanvas" width="900" height="390"></canvas><div class="legend"><div><span>Heart rate</span><span>bpm</span></div><div><span>HRV</span><span>ms</span></div><div><span>Respiration</span><span>/min</span></div><div><span>Activation score</span><span>0–100 estimate</span></div></div></div>
+      <div class="card"><h2>Chart controls</h2><p id="pointCount" class="muted">0 data points</p><div class="controls"><button id="addSamples" class="secondary">Add sample history</button><button id="clearHistory" class="stop">Clear history</button><button id="exportReport" class="success">Create private report</button></div><div id="privateReport" class="feedback hidden"></div></div>
+    </div>
+  </section>
+
+  <section id="privacy" class="panel">
+    <div class="grid">
+      <div class="card">
+        <h2>Responder-controlled sharing</h2>
+        <p class="muted">For a Finland/EU-friendly demo, individual off-duty biometrics stay private by default. The responder can choose whether to share a limited signal or export a report.</p>
+        <div class="share-box">
+          <label class="share-row"><input type="checkbox" id="sharePeer" /> <span><strong>Request peer-support check-in</strong><br><span class="small">Shares only that support is requested. No raw biometrics.</span></span></label>
+          <label class="share-row"><input type="checkbox" id="shareOccHealth" /> <span><strong>Export report for occupational health</strong><br><span class="small">Responder controls the export. Suitable for työterveys-style support.</span></span></label>
+          <label class="share-row"><input type="checkbox" id="shareSupervisor" /> <span><strong>Tell supervisor I request lighter duty today</strong><br><span class="small">Shares a practical request, not a diagnosis or named stress score.</span></span></label>
+          <label class="share-row"><input type="checkbox" checked disabled /> <span><strong>Anonymous group trend included</strong><br><span class="small">Only contributes to crew/station aggregate counts when enough participants exist.</span></span></label>
         </div>
+        <div class="controls"><button id="generateShare" class="success">Generate sharing summary</button></div>
+        <div id="shareSummary" class="feedback hidden"></div>
+      </div>
+      <div class="card">
+        <h2>Product principles</h2>
+        <p><span class="tag">No commander dashboard at home</span><span class="tag">Named data opt-in only</span><span class="tag">Aggregate by default</span><span class="tag">Local-first</span><span class="tag">No diagnosis claims</span></p>
+        <div class="note"><strong>Finland-oriented language</strong><p class="small">Position as recovery, work ability, and occupational safety: <em>palautuminen</em>, <em>työkyky</em>, and <em>työturvallisuus</em>. Avoid “mental health risk scoring” or “stress surveillance.”</p></div>
+      </div>
+    </div>
+  </section>
 
-        <div class="card">
-          <h2>Chart controls</h2>
-          <div class="chart-controls">
-            <button id="refreshChartBtn">Refresh chart</button>
-            <button id="clearHistoryBtn" class="secondary-btn">Clear history</button>
-            <button id="seedHistoryBtn" class="secondary-btn">Add sample history</button>
-          </div>
-          <div class="feedback">
-            <h3>Current log</h3>
-            <p><strong>Data points:</strong> <span id="historyCount">0</span></p>
-            <p><strong>Latest event:</strong> <span id="latestEvent">No readings yet</span></p>
-            <p class="note">The data is kept only in this browser session. It is not uploaded anywhere.</p>
-          </div>
-        </div>
-      </section>
-    </section>
-  </main>
+  <section id="commander" class="panel">
+    <div class="card"><h2>Anonymous commander view</h2><p class="muted">This view demonstrates the win-win: commanders get operational safety signals and staffing recommendations, not named off-duty medical-style data.</p></div>
+    <div class="grid3" style="margin-top:14px">
+      <div class="kpi"><strong id="greenCount">7</strong><span>Green / recovering normally</span></div>
+      <div class="kpi"><strong id="yellowCount">4</strong><span>Yellow / elevated load</span></div>
+      <div class="kpi"><strong id="redCount">1</strong><span>Red / group-level concern</span></div>
+    </div>
+    <div class="grid" style="margin-top:18px">
+      <div class="card"><h2>Operational recommendations</h2><div id="commanderAdvice"></div><div class="controls"><button id="simulateCrew" class="secondary">Simulate crew update</button></div></div>
+      <div class="card"><h2>What command does not see</h2><table class="table"><tr><th>Hidden by default</th><th>Reason</th></tr><tr><td>Named HRV / heart rate / sleep</td><td>Medical-style privacy risk</td></tr><tr><td>Off-duty location</td><td>Surveillance risk</td></tr><tr><td>Trauma notes</td><td>Clinical confidentiality</td></tr><tr><td>App compliance</td><td>Could become punitive</td></tr></table></div>
+    </div>
+  </section>
 
-  <script>
-    const metrics = {
-      heartRate: { label: "Heart rate", unit: "bpm", min: 45, max: 150, step: 3, value: 78, lowerBetter: true, chartColor: "#60a5fa" },
-      hrv: { label: "HRV", unit: "ms", min: 10, max: 120, step: 5, value: 48, lowerBetter: false, chartColor: "#34d399" },
-      respiration: { label: "Respiration", unit: "breaths/min", min: 6, max: 32, step: 1, value: 16, lowerBetter: true, chartColor: "#fbbf24" },
-      stress: { label: "Stress load", unit: "/100", min: 0, max: 100, step: 5, value: 42, lowerBetter: true, chartColor: "#f87171" }
-    };
-
-    let isRunning = false;
-    let seconds = 0;
-    let timerInterval = null;
-    let driftInterval = null;
-    let breathInterval = null;
-    let startedAtValues = null;
-
-    let bilateralRunning = false;
-    let bilateralSeconds = 0;
-    let bilateralTimerInterval = null;
-    let bilateralPulseInterval = null;
-    let bilateralStartedAtValues = null;
-    let activeSide = "left";
-
-    const history = [];
-    const maxHistory = 160;
-
-    const bioList = document.getElementById("bioList");
-    const startBtn = document.getElementById("startBtn");
-    const stopBtn = document.getElementById("stopBtn");
-    const randomizeBtn = document.getElementById("randomizeBtn");
-    const statusDot = document.getElementById("statusDot");
-    const statusText = document.getElementById("statusText");
-    const timer = document.getElementById("timer");
-    const adviceBox = document.getElementById("adviceBox");
-    const feedbackBox = document.getElementById("feedbackBox");
-    const breathCircle = document.getElementById("breathCircle");
-    const exerciseText = document.getElementById("exerciseText");
-
-    const bilateralDot = document.getElementById("bilateralDot");
-    const bilateralStatus = document.getElementById("bilateralStatus");
-    const bilateralTimer = document.getElementById("bilateralTimer");
-    const leftDevice = document.getElementById("leftDevice");
-    const rightDevice = document.getElementById("rightDevice");
-    const pulseSpeed = document.getElementById("pulseSpeed");
-    const pulseIntensity = document.getElementById("pulseIntensity");
-    const pulseSpeedLabel = document.getElementById("pulseSpeedLabel");
-    const pulseIntensityLabel = document.getElementById("pulseIntensityLabel");
-    const startBilateralBtn = document.getElementById("startBilateralBtn");
-    const stopBilateralBtn = document.getElementById("stopBilateralBtn");
-    const bilateralAdviceBox = document.getElementById("bilateralAdviceBox");
-    const bilateralFeedbackBox = document.getElementById("bilateralFeedbackBox");
-
-    const chartCanvas = document.getElementById("historyChart");
-    const chartLegend = document.getElementById("chartLegend");
-    const historyCount = document.getElementById("historyCount");
-    const latestEvent = document.getElementById("latestEvent");
-    const refreshChartBtn = document.getElementById("refreshChartBtn");
-    const clearHistoryBtn = document.getElementById("clearHistoryBtn");
-    const seedHistoryBtn = document.getElementById("seedHistoryBtn");
-
-    function clamp(value, min, max) { return Math.max(min, Math.min(max, value)); }
-    function randomInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
-    function snapshotMetrics() { return Object.fromEntries(Object.entries(metrics).map(([key, metric]) => [key, metric.value])); }
-
-    function logData(eventLabel) {
-      history.push({ time: new Date(), event: eventLabel, values: snapshotMetrics(), risk: riskScore() });
-      if (history.length > maxHistory) history.shift();
-      updateChartMeta();
-      drawChart();
-    }
-
-    function randomizeData(eventLabel = "Randomized bio data") {
-      metrics.heartRate.value = randomInt(62, 128);
-      metrics.hrv.value = randomInt(18, 90);
-      metrics.respiration.value = randomInt(9, 28);
-      metrics.stress.value = randomInt(15, 95);
-      renderBioData();
-      updateAdvice();
-      updateBilateralAdvice();
-      logData(eventLabel);
-    }
-
-    function metricStatus(key, value) {
-      if (key === "heartRate") { if (value >= 105) return "bad"; if (value >= 88) return "warn"; return "good"; }
-      if (key === "hrv") { if (value < 28) return "bad"; if (value < 45) return "warn"; return "good"; }
-      if (key === "respiration") { if (value >= 23) return "bad"; if (value >= 18) return "warn"; return "good"; }
-      if (key === "stress") { if (value >= 75) return "bad"; if (value >= 50) return "warn"; return "good"; }
-      return "good";
-    }
-
-    function statusColor(status) {
-      if (status === "bad") return "var(--bad)";
-      if (status === "warn") return "var(--warn)";
-      return "var(--good)";
-    }
-
-    function riskScore() { return calculateScoreFromValues(snapshotMetrics()); }
-
-    function calculateScoreFromValues(values) {
-      let score = 0;
-      score += clamp((values.heartRate - 70) / 45, 0, 1) * 28;
-      score += clamp((55 - values.hrv) / 45, 0, 1) * 28;
-      score += clamp((values.respiration - 12) / 14, 0, 1) * 22;
-      score += clamp(values.stress / 100, 0, 1) * 22;
-      return Math.round(score);
-    }
-
-    function getAdvice() {
-      const score = riskScore();
-      const hr = metrics.heartRate.value;
-      const hrv = metrics.hrv.value;
-      const rr = metrics.respiration.value;
-      const stress = metrics.stress.value;
-
-      if (score >= 70) {
-        return { level: "HIGH LOAD", className: "level-high", title: "Switch to grounding before deeper breathing.", body: ["Your simulated readings suggest a high activation state.", "Keep your eyes open. Name five things you can see, press both feet into the floor, then use a smaller inhale and a longer exhale.", "Avoid forcing slow breathing. The first goal is orientation and control, not relaxation."], exercise: "Grounding cycle: look around, unclench jaw, drop shoulders, inhale gently for 3, exhale for 5." };
-      }
-      if (hr > 95 && rr > 18) {
-        return { level: "ELEVATED", className: "level-watch", title: "Slow the breathing rhythm.", body: ["Heart rate and respiration are both elevated in the dummy data.", "Make the inhale smaller. Let the exhale do most of the work. Try 3 seconds in, 6 seconds out for the next minute."], exercise: "Breathing cue: inhale 3, exhale 6. Keep the exhale quiet and controlled." };
-      }
-      if (hrv < 35 || stress > 60) {
-        return { level: "WATCH", className: "level-watch", title: "Extend the exhale and reduce effort.", body: ["The pattern suggests incomplete recovery in the dummy data.", "Try less effort, not more. Let the belly and ribs soften on each exhale. Continue for two minutes."], exercise: "Recovery cue: inhale normally, exhale slowly, pause for one comfortable beat." };
-      }
-      return { level: "RECOVERING", className: "level-good", title: "Stay with the current pace.", body: ["The dummy values are in a steadier range.", "Continue the routine. Keep breathing low and slow, and let your attention rest on physical contact points: feet, chair, hands."], exercise: "Maintenance cue: steady breathing, relaxed shoulders, attention on contact points." };
-    }
-
-    function renderBioData() {
-      bioList.innerHTML = "";
-      Object.entries(metrics).forEach(([key, metric]) => {
-        const percent = ((metric.value - metric.min) / (metric.max - metric.min)) * 100;
-        const status = metricStatus(key, metric.value);
-        const row = document.createElement("div");
-        row.className = "bio-row";
-        row.innerHTML = `<div><div class="metric-title"><strong>${metric.label}</strong><span>${metric.value} ${metric.unit}</span></div><div class="bar"><div class="bar-fill" style="width: ${percent}%; background: ${statusColor(status)}"></div></div></div><div class="mini-controls"><button aria-label="Decrease ${metric.label}" data-key="${key}" data-direction="down">−</button><button aria-label="Increase ${metric.label}" data-key="${key}" data-direction="up">+</button></div>`;
-        bioList.appendChild(row);
-      });
-
-      document.querySelectorAll(".mini-controls button").forEach(button => {
-        button.addEventListener("click", () => {
-          const key = button.dataset.key;
-          const direction = button.dataset.direction;
-          const metric = metrics[key];
-          const delta = direction === "up" ? metric.step : -metric.step;
-          metric.value = clamp(metric.value + delta, metric.min, metric.max);
-          renderBioData();
-          updateAdvice();
-          updateBilateralAdvice();
-          logData(`${direction === "up" ? "Increased" : "Decreased"} ${metric.label}`);
-        });
-      });
-    }
-
-    function updateAdvice() {
-      const advice = getAdvice();
-      adviceBox.innerHTML = `<span class="advice-level ${advice.className}">${advice.level}</span><h3>${advice.title}</h3>${advice.body.map(line => `<p>${line}</p>`).join("")}`;
-      exerciseText.textContent = advice.exercise;
-    }
-
-    function updateBilateralAdvice() {
-      const score = riskScore();
-      let level = "READY", className = "level-watch", title = "Use a slow, predictable rhythm.", lines = ["Begin with a mild intensity and keep your eyes open.", "If the pulse feels irritating or activation rises, reduce intensity or stop."];
-      if (score >= 70) {
-        level = "HIGH LOAD"; className = "level-high"; title = "Start with grounding, then very gentle alternating pulses.";
-        lines = ["The dummy readings suggest high activation.", "Use the lowest intensity and slowest speed. Stop immediately if it feels destabilizing."];
-      } else if (score < 45) {
-        level = "STEADY"; className = "level-good"; title = "Low-to-moderate bilateral rhythm is reasonable in this simulation.";
-        lines = ["The dummy readings look steadier.", "Keep the pulses comfortable and pair them with slow exhale-focused breathing."];
-      }
-      bilateralAdviceBox.innerHTML = `<span class="advice-level ${className}">${level}</span><h3>${title}</h3>${lines.map(line => `<p>${line}</p>`).join("")}`;
-    }
-
-    function formatTime(totalSeconds) {
-      const mins = String(Math.floor(totalSeconds / 60)).padStart(2, "0");
-      const secs = String(totalSeconds % 60).padStart(2, "0");
-      return `${mins}:${secs}`;
-    }
-
-    function startBreathAnimation() {
-      let expanded = false;
-      breathCircle.textContent = "Inhale";
-      breathCircle.classList.add("expand");
-      expanded = true;
-      breathInterval = setInterval(() => {
-        expanded = !expanded;
-        breathCircle.classList.toggle("expand", expanded);
-        breathCircle.textContent = expanded ? "Inhale" : "Exhale";
-      }, 4000);
-    }
-
-    function simulateGentleDrift(eventLabel = "Routine drift") {
-      Object.values(metrics).forEach(metric => {
-        const bias = metric.lowerBetter ? -0.25 : 0.25;
-        const randomMove = randomInt(-1, 1);
-        const change = Math.round(randomMove + bias) * metric.step;
-        metric.value = clamp(metric.value + change, metric.min, metric.max);
-      });
-      renderBioData();
-      updateAdvice();
-      updateBilateralAdvice();
-      logData(eventLabel);
-    }
-
-    function startRoutine() {
-      isRunning = true;
-      seconds = 0;
-      feedbackBox.classList.add("hidden");
-      feedbackBox.innerHTML = "";
-      randomizeData("Started reset routine");
-      startedAtValues = snapshotMetrics();
-      statusDot.classList.add("active");
-      statusText.textContent = "Routine active";
-      startBtn.disabled = true;
-      stopBtn.disabled = false;
-      timer.textContent = "00:00";
-      timerInterval = setInterval(() => { seconds += 1; timer.textContent = formatTime(seconds); }, 1000);
-      driftInterval = setInterval(() => simulateGentleDrift("Reset routine reading"), 5000);
-      startBreathAnimation();
-      updateAdvice();
-    }
-
-    function feedbackLine(label, start, end, lowerIsBetter) {
-      const delta = end - start;
-      const improved = lowerIsBetter ? delta < 0 : delta > 0;
-      const unchanged = delta === 0;
-      const sign = delta > 0 ? "+" : "";
-      if (unchanged) return `${label}: no change.`;
-      return `${label}: ${sign}${delta} ${improved ? "— moved in a recovery-friendly direction." : "— may need more downshift time."}`;
-    }
-
-    function stopRoutine() {
-      isRunning = false;
-      clearInterval(timerInterval); clearInterval(driftInterval); clearInterval(breathInterval);
-      timerInterval = null; driftInterval = null; breathInterval = null;
-      statusDot.classList.remove("active");
-      statusText.textContent = "Routine stopped";
-      startBtn.disabled = false;
-      stopBtn.disabled = true;
-      breathCircle.textContent = "Stopped";
-      breathCircle.classList.remove("expand");
-      logData("Stopped reset routine");
-
-      const currentScore = riskScore();
-      const startScore = startedAtValues ? calculateScoreFromValues(startedAtValues) : currentScore;
-      const scoreChange = currentScore - startScore;
-      const summary = scoreChange < -8 ? "Good recovery response in the simulated data." : scoreChange > 8 ? "Activation increased in the simulated data. Try a shorter grounding routine before slow breathing." : "Mixed or stable response in the simulated data. Continue with a low-effort reset routine.";
-
-      feedbackBox.classList.remove("hidden");
-      feedbackBox.innerHTML = `<h3>Routine feedback</h3><p><strong>Duration:</strong> ${formatTime(seconds)}</p><p><strong>Summary:</strong> ${summary}</p><ul><li>${feedbackLine("Heart rate", startedAtValues.heartRate, metrics.heartRate.value, true)}</li><li>${feedbackLine("HRV", startedAtValues.hrv, metrics.hrv.value, false)}</li><li>${feedbackLine("Respiration", startedAtValues.respiration, metrics.respiration.value, true)}</li><li>${feedbackLine("Stress load", startedAtValues.stress, metrics.stress.value, true)}</li></ul>`;
-    }
-
-    function renderPulse() {
-      const intensity = Number(pulseIntensity.value);
-      const scale = 1 + intensity / 1000;
-      leftDevice.classList.toggle("active", activeSide === "left");
-      rightDevice.classList.toggle("active", activeSide === "right");
-      leftDevice.style.transform = activeSide === "left" ? `scale(${scale})` : "";
-      rightDevice.style.transform = activeSide === "right" ? `scale(${scale})` : "";
-      leftDevice.querySelector("span").textContent = activeSide === "left" ? `Pulsing at ${intensity}%` : "Resting";
-      rightDevice.querySelector("span").textContent = activeSide === "right" ? `Pulsing at ${intensity}%` : "Resting";
-    }
-
-    function restartBilateralPulse() {
-      clearInterval(bilateralPulseInterval);
-      if (!bilateralRunning) return;
-      bilateralPulseInterval = setInterval(() => {
-        activeSide = activeSide === "left" ? "right" : "left";
-        renderPulse();
-        simulateGentleDrift("Bilateral stimulation reading");
-      }, Number(pulseSpeed.value));
-    }
-
-    function startBilateral() {
-      bilateralRunning = true;
-      bilateralSeconds = 0;
-      bilateralFeedbackBox.classList.add("hidden");
-      bilateralFeedbackBox.innerHTML = "";
-      bilateralStartedAtValues = snapshotMetrics();
-      bilateralDot.classList.add("pulse");
-      bilateralStatus.textContent = "Bilateral routine active";
-      startBilateralBtn.disabled = true;
-      stopBilateralBtn.disabled = false;
-      bilateralTimer.textContent = "00:00";
-      activeSide = "left";
-      renderPulse();
-      updateBilateralAdvice();
-      logData("Started bilateral stimulation");
-      bilateralTimerInterval = setInterval(() => { bilateralSeconds += 1; bilateralTimer.textContent = formatTime(bilateralSeconds); }, 1000);
-      restartBilateralPulse();
-    }
-
-    function stopBilateral() {
-      bilateralRunning = false;
-      clearInterval(bilateralTimerInterval); clearInterval(bilateralPulseInterval);
-      bilateralTimerInterval = null; bilateralPulseInterval = null;
-      bilateralDot.classList.remove("pulse");
-      bilateralStatus.textContent = "Bilateral routine stopped";
-      startBilateralBtn.disabled = false;
-      stopBilateralBtn.disabled = true;
-      leftDevice.classList.remove("active"); rightDevice.classList.remove("active");
-      leftDevice.style.transform = ""; rightDevice.style.transform = "";
-      leftDevice.querySelector("span").textContent = "Stopped";
-      rightDevice.querySelector("span").textContent = "Stopped";
-      logData("Stopped bilateral stimulation");
-
-      const currentScore = riskScore();
-      const startScore = bilateralStartedAtValues ? calculateScoreFromValues(bilateralStartedAtValues) : currentScore;
-      const scoreChange = currentScore - startScore;
-      const summary = scoreChange < -8 ? "The simulated trend moved toward recovery during bilateral stimulation." : scoreChange > 8 ? "The simulated trend became more activated. Reduce intensity/speed or switch to grounding." : "The simulated trend was mostly stable.";
-      bilateralFeedbackBox.classList.remove("hidden");
-      bilateralFeedbackBox.innerHTML = `<h3>Bilateral routine feedback</h3><p><strong>Duration:</strong> ${formatTime(bilateralSeconds)}</p><p><strong>Summary:</strong> ${summary}</p>`;
-    }
-
-    function updateChartMeta() {
-      historyCount.textContent = history.length;
-      if (history.length === 0) {
-        latestEvent.textContent = "No readings yet";
-      } else {
-        const last = history[history.length - 1];
-        latestEvent.textContent = `${last.event} at ${last.time.toLocaleTimeString()}`;
-      }
-      renderLegend();
-    }
-
-    function drawChart() {
-      const ctx = chartCanvas.getContext("2d");
-      const width = chartCanvas.width;
-      const height = chartCanvas.height;
-      ctx.clearRect(0, 0, width, height);
-      ctx.fillStyle = "#0f172a";
-      ctx.fillRect(0, 0, width, height);
-
-      const pad = { left: 58, right: 24, top: 24, bottom: 44 };
-      const plotW = width - pad.left - pad.right;
-      const plotH = height - pad.top - pad.bottom;
-
-      ctx.strokeStyle = "rgba(148, 163, 184, 0.18)";
-      ctx.lineWidth = 1;
-      ctx.fillStyle = "#94a3b8";
-      ctx.font = "12px Arial";
-      for (let i = 0; i <= 5; i++) {
-        const y = pad.top + (plotH / 5) * i;
-        ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(width - pad.right, y); ctx.stroke();
-        const label = `${Math.round(100 - i * 20)}%`;
-        ctx.fillText(label, 12, y + 4);
-      }
-
-      ctx.strokeStyle = "rgba(229, 231, 235, 0.45)";
-      ctx.beginPath(); ctx.moveTo(pad.left, pad.top); ctx.lineTo(pad.left, height - pad.bottom); ctx.lineTo(width - pad.right, height - pad.bottom); ctx.stroke();
-
-      if (history.length === 0) {
-        ctx.fillStyle = "#cbd5e1";
-        ctx.font = "18px Arial";
-        ctx.fillText("No data yet. Start a routine, randomize data, or add sample history.", pad.left + 34, height / 2);
-        return;
-      }
-
-      const keys = Object.keys(metrics);
-      keys.forEach(key => {
-        const metric = metrics[key];
-        ctx.strokeStyle = metric.chartColor;
-        ctx.lineWidth = 3;
-        ctx.beginPath();
-        history.forEach((point, index) => {
-          const x = pad.left + (history.length === 1 ? plotW / 2 : (plotW * index) / (history.length - 1));
-          const normalized = (point.values[key] - metric.min) / (metric.max - metric.min);
-          const y = pad.top + plotH - normalized * plotH;
-          if (index === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
-        });
-        ctx.stroke();
-      });
-
-      ctx.fillStyle = "#94a3b8";
-      ctx.font = "12px Arial";
-      const first = history[0].time.toLocaleTimeString();
-      const last = history[history.length - 1].time.toLocaleTimeString();
-      ctx.fillText(first, pad.left, height - 16);
-      ctx.fillText(last, width - pad.right - 80, height - 16);
-      ctx.fillText("Values normalized to each metric range", pad.left + 300, height - 16);
-    }
-
-    function renderLegend() {
-      chartLegend.innerHTML = Object.entries(metrics).map(([key, metric]) => {
-        const latest = history.length ? history[history.length - 1].values[key] : metric.value;
-        return `<div class="legend-item"><div class="legend-left"><span class="swatch" style="background:${metric.chartColor}"></span><strong>${metric.label}</strong></div><span>${latest} ${metric.unit}</span></div>`;
-      }).join("");
-    }
-
-    function seedHistory() {
-      const base = snapshotMetrics();
-      for (let i = 14; i >= 0; i--) {
-        const values = {
-          heartRate: clamp(base.heartRate + randomInt(-18, 18), metrics.heartRate.min, metrics.heartRate.max),
-          hrv: clamp(base.hrv + randomInt(-22, 22), metrics.hrv.min, metrics.hrv.max),
-          respiration: clamp(base.respiration + randomInt(-6, 6), metrics.respiration.min, metrics.respiration.max),
-          stress: clamp(base.stress + randomInt(-28, 28), metrics.stress.min, metrics.stress.max)
-        };
-        history.push({ time: new Date(Date.now() - i * 45000), event: "Sample history", values, risk: calculateScoreFromValues(values) });
-      }
-      while (history.length > maxHistory) history.shift();
-      updateChartMeta(); drawChart();
-    }
-
-    document.querySelectorAll(".tab-btn").forEach(button => {
-      button.addEventListener("click", () => {
-        document.querySelectorAll(".tab-btn").forEach(btn => btn.classList.remove("active"));
-        document.querySelectorAll(".tab-panel").forEach(panel => panel.classList.remove("active"));
-        button.classList.add("active");
-        document.getElementById(button.dataset.tab).classList.add("active");
-        if (button.dataset.tab === "chartTab") drawChart();
-      });
-    });
-
-    startBtn.addEventListener("click", startRoutine);
-    stopBtn.addEventListener("click", stopRoutine);
-    randomizeBtn.addEventListener("click", () => randomizeData());
-    startBilateralBtn.addEventListener("click", startBilateral);
-    stopBilateralBtn.addEventListener("click", stopBilateral);
-    pulseSpeed.addEventListener("input", () => { pulseSpeedLabel.textContent = pulseSpeed.value; restartBilateralPulse(); });
-    pulseIntensity.addEventListener("input", () => { pulseIntensityLabel.textContent = pulseIntensity.value; if (bilateralRunning) renderPulse(); });
-    refreshChartBtn.addEventListener("click", drawChart);
-    clearHistoryBtn.addEventListener("click", () => { history.length = 0; updateChartMeta(); drawChart(); });
-    seedHistoryBtn.addEventListener("click", seedHistory);
-
-    renderBioData();
-    updateAdvice();
-    updateBilateralAdvice();
-    logData("Initial reading");
-  </script>
+  <p class="footer">Demo only. Data is randomly generated in your browser and is not medical advice, diagnosis, or treatment. A real product would need clinical review, security design, GDPR/legal review, responder co-design, and occupational health governance.</p>
+</div>
+<script>
+const state={routine:false,bilateral:false,routineStart:null,bilateralStart:null,intervals:{},values:{hr:82,hrv:42,resp:16,activation:48},history:[],crew:{green:7,yellow:4,red:1}};
+const defs={hr:{label:'Heart rate',unit:'bpm',min:45,max:150,step:3},hrv:{label:'HRV',unit:'ms',min:8,max:110,step:4},resp:{label:'Respiration',unit:'/min',min:6,max:34,step:1},activation:{label:'Activation score',unit:'/100',min:0,max:100,step:5}};
+const $=id=>document.getElementById(id);const clamp=(v,min,max)=>Math.max(min,Math.min(max,v));const fmt=s=>{s=Math.floor(s);return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0')};
+function computeActivation(){const hr=(state.values.hr-60)/70*35;const hrv=(70-state.values.hrv)/60*35;const resp=(state.values.resp-12)/18*25;return Math.round(clamp(hr+hrv+resp+10,0,100));}
+function level(){const a=state.values.activation;if(a<40)return['Recovery window','good'];if(a<70)return['Watch zone','watch'];return['High activation','high'];}
+function adviceText(){const v=state.values;let lines=[];const [title,cls]=level();if(v.activation>=70){lines.push('Your system still looks highly activated. Make the exhale longer than the inhale, lower the intensity, and switch to grounding if breathing feels irritating.');}else if(v.activation>=40){lines.push('You are in a watch zone. Keep the pace steady and aim for smaller, slower breaths rather than deeper breaths.');}else{lines.push('Recovery signs look stable. Stay with the current pace for another minute and notice the room around you.');}
+if(v.hr>100)lines.push('Heart rate is elevated: relax jaw, shoulders, and hands; avoid forcing a deep inhale.');if(v.hrv<25)lines.push('HRV is low: try a 4-second inhale and 6-second exhale.');if(v.resp>22)lines.push('Breathing rate is high: pause after the exhale and let the next breath arrive naturally.');return {title,cls,lines};}
+function renderMetrics(log=true,event='manual update'){state.values.activation=computeActivation();const wrap=$('metrics');wrap.innerHTML='';Object.keys(defs).forEach(k=>{const d=defs[k],val=state.values[k];let pct=(val-d.min)/(d.max-d.min)*100;pct=clamp(pct,0,100);let color='var(--blue)';if(k==='hrv') color=val<25?'var(--red)':val<45?'var(--yellow)':'var(--green)'; else color=val>75 && k==='activation'?'var(--red)': val>55 && k==='activation'?'var(--yellow)':'var(--blue)';
+const row=document.createElement('div');row.className='metric';row.innerHTML=`<div><div class="metric-head"><strong>${d.label}</strong><span>${val} ${d.unit}</span></div><div class="bar"><div class="fill" style="width:${pct}%;background:${color}"></div></div></div><div class="mini"><button aria-label="decrease ${d.label}" onclick="adjust('${k}',-${d.step})">−</button><button aria-label="increase ${d.label}" onclick="adjust('${k}',${d.step})">+</button></div>`;wrap.appendChild(row)});renderAdvice();renderBilateralAdvice();if(log) addHistory(event);}
+function renderAdvice(){const a=adviceText();$('advice').innerHTML=`<span class="level ${a.cls}">${a.title}</span><h3>Recommended next step</h3>${a.lines.map(x=>`<p>${x}</p>`).join('')}<p class="small">This is an estimated activation score, not a diagnosis.</p>`;}
+function renderBilateralAdvice(){const a=adviceText();let extra=state.values.activation>70?'Use slower pulses and lower intensity. If distress increases, stop and orient to the room.':state.values.activation>40?'Keep alternating left/right pulses at a comfortable pace. Pair it with normal breathing.':'Maintain gentle alternating pulses or end the session while recovery is stable.';$('bilateralAdvice').innerHTML=`<span class="level ${a.cls}">${a.title}</span><h3>Bilateral suggestion</h3><p>${extra}</p><p class="small">The demo simulates haptic devices. It does not control hardware.</p>`;}
+function adjust(k,delta){state.values[k]=clamp(state.values[k]+delta,defs[k].min,defs[k].max);if(k!=='activation')state.values.activation=computeActivation();renderMetrics(true,'manual adjustment');}
+function randomize(){state.values.hr=Math.round(60+Math.random()*55);state.values.hrv=Math.round(14+Math.random()*72);state.values.resp=Math.round(10+Math.random()*18);state.values.activation=computeActivation();renderMetrics(true,'random sample');}
+function addHistory(event){state.history.push({t:new Date(),event,hr:state.values.hr,hrv:state.values.hrv,resp:state.values.resp,activation:state.values.activation});if(state.history.length>120)state.history.shift();drawChart();}
+function startRoutine(){if(state.routine)return;randomize();state.routine=true;state.routineStart=Date.now();$('routineDot').classList.add('on');$('routineState').textContent='Routine running';$('startRoutine').disabled=true;$('stopRoutine').disabled=false;$('routineFeedback').classList.add('hidden');$('breathCircle').classList.add('running');state.intervals.routine=setInterval(()=>{const phase=Math.floor((Date.now()/1000)%8);$('breathCircle').textContent=phase<3?'INHALE':phase<5?'HOLD':'EXHALE';$('breathCue').textContent=phase<3?'Inhale gently. Do not overfill.':phase<5?'Hold softly. Keep shoulders loose.':'Longer exhale. Let the body downshift.';state.values.hr=clamp(state.values.hr+Math.round(Math.random()*4-3),defs.hr.min,defs.hr.max);state.values.hrv=clamp(state.values.hrv+Math.round(Math.random()*7-2),defs.hrv.min,defs.hrv.max);state.values.resp=clamp(state.values.resp+Math.round(Math.random()*3-2),defs.resp.min,defs.resp.max);renderMetrics(true,'reset routine sample');$('routineTimer').textContent=fmt((Date.now()-state.routineStart)/1000);},1800)}
+function stopRoutine(){if(!state.routine)return;clearInterval(state.intervals.routine);state.routine=false;$('routineDot').classList.remove('on');$('routineState').textContent='Routine stopped';$('startRoutine').disabled=false;$('stopRoutine').disabled=true;$('breathCircle').classList.remove('running');$('breathCircle').textContent='DONE';const a=adviceText();$('routineFeedback').classList.remove('hidden');$('routineFeedback').innerHTML=`<h3>Session feedback</h3><p><strong>${a.title}.</strong> Activation ended at ${state.values.activation}/100. Most useful next step: ${state.values.activation>70?'switch to grounding and consider support if this persists.':state.values.activation>40?'repeat a shorter downshift or prepare for sleep.':'end here and protect recovery time.'}</p>`;addHistory('reset routine stopped')}
+function startBilateral(){if(state.bilateral)return;state.bilateral=true;state.bilateralStart=Date.now();$('bilateralDot').classList.add('on');$('bilateralState').textContent='Bilateral routine running';$('startBilateral').disabled=true;$('stopBilateral').disabled=false;$('bilateralFeedback').classList.add('hidden');let side=false;function pulse(){side=!side;$('leftDevice').classList.toggle('active',side);$('leftDevice').classList.toggle('left',side);$('rightDevice').classList.toggle('active',!side);$('rightDevice').classList.toggle('right',!side);$('bilateralTimer').textContent=fmt((Date.now()-state.bilateralStart)/1000);state.values.hr=clamp(state.values.hr+Math.round(Math.random()*3-2),defs.hr.min,defs.hr.max);state.values.hrv=clamp(state.values.hrv+Math.round(Math.random()*4-1),defs.hrv.min,defs.hrv.max);state.values.resp=clamp(state.values.resp+Math.round(Math.random()*3-1),defs.resp.min,defs.resp.max);renderMetrics(true,'bilateral sample');clearInterval(state.intervals.bilateral);state.intervals.bilateral=setInterval(pulse,Number($('pulseSpeed').value));}pulse();}
+function stopBilateral(){if(!state.bilateral)return;clearInterval(state.intervals.bilateral);state.bilateral=false;$('bilateralDot').classList.remove('on');$('bilateralState').textContent='Bilateral routine stopped';$('startBilateral').disabled=false;$('stopBilateral').disabled=true;$('leftDevice').className='device';$('rightDevice').className='device';$('bilateralFeedback').classList.remove('hidden');$('bilateralFeedback').innerHTML=`<h3>Bilateral feedback</h3><p>Ended with activation score ${state.values.activation}/100 at intensity ${$('pulseIntensity').value}/10. ${state.values.activation>65?'Recommendation: lower intensity next time and use grounding first.':'Recommendation: keep this pace as a preferred recovery option.'}</p>`;addHistory('bilateral stopped')}
+function drawChart(){const c=$('historyCanvas'),ctx=c.getContext('2d');ctx.clearRect(0,0,c.width,c.height);ctx.strokeStyle='#2a3d59';ctx.lineWidth=1;for(let i=0;i<6;i++){const y=25+i*(c.height-55)/5;ctx.beginPath();ctx.moveTo(40,y);ctx.lineTo(c.width-15,y);ctx.stroke();}ctx.fillStyle='#9fb0c7';ctx.font='12px Arial';ctx.fillText('100',8,30);ctx.fillText('0',18,c.height-28);const h=state.history;if(h.length<2){ctx.fillText('No history yet. Start a routine or add sample history.',55,70);$('pointCount').textContent=h.length+' data points';return;}const keys=[['hr','#5aa7ff',45,150],['hrv','#44d19d',0,110],['resp','#ffd166',6,34],['activation','#ff6b6b',0,100]];keys.forEach(([k,col,min,max])=>{ctx.strokeStyle=col;ctx.lineWidth=2;ctx.beginPath();h.forEach((p,i)=>{const x=45+i*(c.width-70)/(h.length-1);const y=25+(1-(p[k]-min)/(max-min))*(c.height-55);if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y)});ctx.stroke();});$('pointCount').textContent=h.length+' data points · latest: '+h[h.length-1].event;}
+function addSamples(){for(let i=0;i<20;i++){state.values.hr=clamp(95-i+Math.round(Math.random()*10-5),defs.hr.min,defs.hr.max);state.values.hrv=clamp(24+i*2+Math.round(Math.random()*8-4),defs.hrv.min,defs.hrv.max);state.values.resp=clamp(23-Math.floor(i/2)+Math.round(Math.random()*3-1),defs.resp.min,defs.resp.max);state.values.activation=computeActivation();addHistory('sample trend');}renderMetrics(false)}
+function exportReport(){const a=adviceText();$('privateReport').classList.remove('hidden');$('privateReport').innerHTML=`<h3>Private recovery report</h3><p><strong>Current status:</strong> ${a.title}; activation ${state.values.activation}/100.</p><p><strong>Trend:</strong> ${state.history.length} locally stored demo data points.</p><p><strong>Suggested personal action:</strong> ${a.lines[0]}</p><p class="small local">This report is private unless the responder chooses to export it.</p>`;}
+function generateShare(){let items=[];if($('sharePeer').checked)items.push('Peer-support check-in requested.');if($('shareOccHealth').checked)items.push('Occupational health export prepared by user choice.');if($('shareSupervisor').checked)items.push('Supervisor receives: responder requests lighter duty today.');if(!items.length)items.push('No named data shared. Anonymous aggregate trend only.');$('shareSummary').classList.remove('hidden');$('shareSummary').innerHTML=`<h3>Sharing summary</h3><p>${items.join('<br>')}</p><p class="small">Raw off-duty biometrics, sleep, HRV, location, and trauma notes are not sent to command.</p>`;}
+function renderCommander(){$('greenCount').textContent=state.crew.green;$('yellowCount').textContent=state.crew.yellow;$('redCount').textContent=state.crew.red;let total=state.crew.green+state.crew.yellow+state.crew.red;let redPct=state.crew.red/total;let yellowPct=(state.crew.yellow+state.crew.red)/total;let html='';if(redPct>.18){html+=`<div class="decision red"><strong>Group-level concern.</strong><br>Consider relief staffing, reduced nonessential work, and optional occupational-health / peer-support availability.</div>`}else if(yellowPct>.45){html+=`<div class="decision warn"><strong>Elevated crew load.</strong><br>Rotate crews earlier, protect breaks, and avoid adding optional training today.</div>`}else{html+=`<div class="decision"><strong>Normal operating range.</strong><br>Maintain routine recovery practices and keep support optional.</div>`}html+=`<div class="decision"><strong>Privacy-preserving action.</strong><br>Command sees distribution and recommendations, not named off-duty biometrics.</div>`;$('commanderAdvice').innerHTML=html;}
+function simulateCrew(){const total=12;let red=Math.floor(Math.random()*4);let yellow=Math.floor(Math.random()*6);if(red+yellow>total)yellow=total-red;state.crew={red,yellow,green:total-red-yellow};renderCommander();}
+document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.tab,.panel').forEach(x=>x.classList.remove('active'));b.classList.add('active');$(b.dataset.tab).classList.add('active');drawChart();}));$('startRoutine').onclick=startRoutine;$('stopRoutine').onclick=stopRoutine;$('randomize').onclick=randomize;$('startBilateral').onclick=startBilateral;$('stopBilateral').onclick=stopBilateral;$('addSamples').onclick=addSamples;$('clearHistory').onclick=()=>{state.history=[];drawChart()};$('exportReport').onclick=exportReport;$('generateShare').onclick=generateShare;$('simulateCrew').onclick=simulateCrew;$('pulseSpeed').oninput=()=>{if(state.bilateral){stopBilateral();startBilateral();}};
+renderMetrics(true,'initial');renderCommander();drawChart();
+</script>
 </body>
 </html>
